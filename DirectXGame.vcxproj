@@ -178,6 +178,7 @@ xcopy "$(ProjectDir)..\External\KamataEngine\shaders" "$(ProjectDir)Resources\En
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DebugCamera.cpp" />
     <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Player.cpp" />
