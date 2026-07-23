@@ -1,6 +1,6 @@
+#include "GameScene.h"
+#include "KamataEngine.h"
 #include <Windows.h>
-#include"KamataEngine.h"
-#include"GameScene.h"
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
@@ -38,8 +38,14 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		// 描画前処理
 		dxCommon->PreDraw();
 
+		// 3Dモデル描画前処理
+		Model::PreDraw();
+
 		// ゲームシーンの描画
 		gameScene->Draw();
+
+		// 3Dモデル描画後処理
+		Model::PostDraw();
 
 		// 描画後処理
 		dxCommon->PostDraw();
