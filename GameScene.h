@@ -2,6 +2,9 @@
 
 #include "KamataEngine.h"
 #include "Player.h"
+#include "Skydome.h"
+#include "WorldTransformUpdate.h"
+
 #include <3d/DebugCamera.h>
 
 #include <vector>
@@ -23,14 +26,15 @@ public:
 	void Draw();
 
 private:
-	// テクスチャハンドル
-	uint32_t textureHandle_ = 0u;
 
 	// 3Dモデルデータ
 	KamataEngine::Model* model_ = nullptr;
 
 	// ブロック用3Dモデルデータ
 	KamataEngine::Model* modelBlock_ = nullptr;
+
+	// 天球用3Dモデルデータ
+	KamataEngine::Model* modelSkydome_ = nullptr;
 
 	// カメラ
 	KamataEngine::Camera camera_;
@@ -43,6 +47,9 @@ private:
 
 	// 自キャラ
 	Player* player_ = nullptr;
+
+	// 天球
+	Skydome* skydome_ = nullptr;
 
 	// ブロック用のワールドトランスフォーム
 	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;

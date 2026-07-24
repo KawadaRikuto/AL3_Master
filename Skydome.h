@@ -3,16 +3,14 @@
 #include "KamataEngine.h"
 
 /// <summary>
-/// 自キャラ
+/// 天球
 /// </summary>
-class Player {
+class Skydome {
 
 public:
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	/// <param name="model">モデル</param>
-	/// <param name="camera">カメラ</param>
 	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera);
 
 	/// <summary>

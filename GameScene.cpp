@@ -103,16 +103,31 @@ KamataEngine::Matrix4x4 MakeAffineMatrix(const KamataEngine::Vector3& scale, con
 	return Multiply(Multiply(scaleMatrix, rotateMatrix), translateMatrix);
 }
 
+/// <summary>
+/// 行列を計算・転送する
+/// </summary>
+void UpdateWorldTransform(KamataEngine::WorldTransform& worldTransform) {
+
+	// スケール、回転、平行移動を含んで行列を計算する
+	worldTransform.matWorld_ = MakeAffineMatrix(worldTransform.scale_, worldTransform.rotation_, worldTransform.translation_);
+
+	// 定数バッファへの書き込み
+	worldTransform.TransferMatrix();
+}
+
 void GameScene::Initialize() {
 
-	// ファイル名を指定してテクスチャを読み込む
-	textureHandle_ = KamataEngine::TextureManager::Load("uvChecker.png");
-
-	// 3Dモデルデータの生成
-	model_ = KamataEngine::Model::Create();
+	// 自キャラ用3Dモデルデータの生成
+	model_ = KamataEngine::Model::CreateFromOBJ("player", true);
 
 	// ブロック用3Dモデルデータの生成
-	modelBlock_ = KamataEngine::Model::Create();
+	modelBlock_ = KamataEngine::Model::CreateFromOBJ("block", true);
+
+	// 天球用3Dモデルデータの生成
+	modelSkydome_ = KamataEngine::Model::CreateFromOBJ("skydome", true);
+
+	// カメラのfarZを適度に大きい値に変更する
+	camera_.farZ = 1000.0f;
 
 	// カメラの初期化
 	camera_.Initialize();
@@ -120,32 +135,40 @@ void GameScene::Initialize() {
 	// デバッグカメラの生成
 	debugCamera_ = new KamataEngine::DebugCamera(KamataEngine::WinApp::kWindowWidth, KamataEngine::WinApp::kWindowHeight);
 
+	// デバッグカメラのfarZを適度に大きい値に変更する
+	debugCamera_->SetFarZ(1000.0f);
+
 	// 自キャラの生成
 	player_ = new Player();
 
-	// 自キャラの初期化
-	player_->Initialize(model_, textureHandle_, &camera_);
+	player_->Initialize(model_, &camera_);
+
+	// 天球の生成
+	skydome_ = new Skydome();
+
+	// 天球の初期化
+	skydome_->Initialize(modelSkydome_, &camera_);
 
 	// 要素数
 	const uint32_t kNumBlockVertical = 10;
 	const uint32_t kNumBlockHorizontal = 20;
 
 	// ブロック1個分の横幅
-	const float kBlockWidth = 2.0f;
-	const float kBlockHeight = 2.0f;
+	const float kBlockWidth = 1.0f;
+	const float kBlockHeight = 1.0f;
 
-	// 要素数を変更する
-	// 列数を設定（縦方向のブロック数）
+	// 列数を設定
 	worldTransformBlocks_.resize(kNumBlockVertical);
 
 	for (uint32_t i = 0; i < kNumBlockVertical; ++i) {
 
-		// 1列の要素数を設定（横方向のブロック数）
+		// 横方向のブロック数を設定
 		worldTransformBlocks_[i].resize(kNumBlockHorizontal);
 	}
 
 	// ブロックの生成
 	for (uint32_t i = 0; i < kNumBlockVertical; ++i) {
+
 		for (uint32_t j = 0; j < kNumBlockHorizontal; ++j) {
 
 			// 1マスおきに穴を開ける
@@ -177,6 +200,9 @@ void GameScene::Update() {
 	// 自キャラの更新
 	player_->Update();
 
+	// 天球の更新
+	skydome_->Update();
+
 	// ブロックの更新
 	for (std::vector<KamataEngine::WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 
@@ -186,11 +212,8 @@ void GameScene::Update() {
 				continue;
 			}
 
-			// アフィン変換行列の作成
-			worldTransformBlock->matWorld_ = MakeAffineMatrix(worldTransformBlock->scale_, worldTransformBlock->rotation_, worldTransformBlock->translation_);
-
-			// 定数バッファに転送する
-			worldTransformBlock->TransferMatrix();
+			// ワールド行列を計算して転送
+			UpdateWorldTransform(*worldTransformBlock);
 		}
 	}
 
@@ -204,17 +227,20 @@ void GameScene::Update() {
 
 		camera_.matProjection = debugCamera_->GetCamera().matProjection;
 
-		// ビュープロジェクション行列の転送
+		// カメラ行列の転送
 		camera_.TransferMatrix();
 
 	} else {
 
-		// ビュープロジェクション行列の更新と転送
+		// 通常カメラの更新
 		camera_.UpdateMatrix();
 	}
 }
 
 void GameScene::Draw() {
+
+	// 天球の描画
+	skydome_->Draw();
 
 	// 自キャラの描画
 	player_->Draw();
@@ -245,6 +271,12 @@ GameScene::~GameScene() {
 	}
 
 	worldTransformBlocks_.clear();
+
+	// 天球の解放
+	delete skydome_;
+
+	// 天球用3Dモデルデータの解放
+	delete modelSkydome_;
 
 	// デバッグカメラの解放
 	delete debugCamera_;
