@@ -9,6 +9,7 @@ KamataEngine::Matrix4x4 Multiply(const KamataEngine::Matrix4x4& m1, const Kamata
 	for (int row = 0; row < 4; ++row) {
 		for (int column = 0; column < 4; ++column) {
 			for (int i = 0; i < 4; ++i) {
+
 				result.m[row][column] += m1.m[row][i] * m2.m[i][column];
 			}
 		}
@@ -103,15 +104,10 @@ KamataEngine::Matrix4x4 MakeAffineMatrix(const KamataEngine::Vector3& scale, con
 	return Multiply(Multiply(scaleMatrix, rotateMatrix), translateMatrix);
 }
 
-/// <summary>
-/// 行列を計算・転送する
-/// </summary>
 void UpdateWorldTransform(KamataEngine::WorldTransform& worldTransform) {
 
-	// スケール、回転、平行移動を含んで行列を計算する
 	worldTransform.matWorld_ = MakeAffineMatrix(worldTransform.scale_, worldTransform.rotation_, worldTransform.translation_);
 
-	// 定数バッファへの書き込み
 	worldTransform.TransferMatrix();
 }
 
@@ -132,7 +128,7 @@ void GameScene::Initialize() {
 	// 天球用3Dモデルデータの生成
 	modelSkydome_ = KamataEngine::Model::CreateFromOBJ("skydome", true);
 
-	// カメラのfarZを適度に大きい値に変更する
+	// カメラのfarZを変更
 	camera_.farZ = 1000.0f;
 
 	// カメラの初期化
@@ -141,7 +137,6 @@ void GameScene::Initialize() {
 	// デバッグカメラの生成
 	debugCamera_ = new KamataEngine::DebugCamera(KamataEngine::WinApp::kWindowWidth, KamataEngine::WinApp::kWindowHeight);
 
-	// デバッグカメラのfarZを適度に大きい値に変更する
 	debugCamera_->SetFarZ(1000.0f);
 
 	// 自キャラの生成
@@ -153,6 +148,9 @@ void GameScene::Initialize() {
 	// 自キャラの初期化
 	player_->Initialize(model_, &camera_, playerPosition);
 
+	// マップチップデータをセット
+	player_->SetMapChipField(mapChipField_);
+
 	// カメラコントローラの生成
 	cameraController_ = new CameraController();
 
@@ -160,17 +158,21 @@ void GameScene::Initialize() {
 	cameraController_->Initialize();
 
 	// 移動範囲の指定
-	CameraController::Rect cameraArea = {0.0f, 100.0f, 0.0f, 20.0f};
+	CameraController::Rect cameraArea = {
+	    0.0f,
+	    100.0f,
+	    0.0f,
+	    20.0f,
+	};
 
 	cameraController_->SetMovableArea(cameraArea);
 
 	// 追従対象をセット
 	cameraController_->SetTarget(player_);
 
-	// リセット（瞬間合わせ）
+	// リセット
 	cameraController_->Reset();
 
-	// カメラコントローラのカメラを反映
 	camera_.matView = cameraController_->GetCamera().matView;
 
 	camera_.matProjection = cameraController_->GetCamera().matProjection;
@@ -183,16 +185,13 @@ void GameScene::Initialize() {
 	// 天球の初期化
 	skydome_->Initialize(modelSkydome_, &camera_);
 
-	// 要素数
 	const uint32_t kNumBlockVertical = 20;
 	const uint32_t kNumBlockHorizontal = 100;
 
-	// 列数を設定
 	worldTransformBlocks_.resize(kNumBlockVertical);
 
 	for (uint32_t i = 0; i < kNumBlockVertical; ++i) {
 
-		// 横方向のブロック数を設定
 		worldTransformBlocks_[i].resize(kNumBlockHorizontal);
 	}
 
@@ -201,7 +200,6 @@ void GameScene::Initialize() {
 
 		for (uint32_t j = 0; j < kNumBlockHorizontal; ++j) {
 
-			// CSV上で空白になっているマスにはブロックを生成しない
 			if (mapChipField_->GetMapChipTypeByIndex(j, i) == MapChipType::kBlank) {
 
 				continue;
@@ -211,10 +209,8 @@ void GameScene::Initialize() {
 
 			worldTransformBlocks_[i][j]->Initialize();
 
-			// マップチップ番号からブロック座標を取得
 			KamataEngine::Vector3 blockPosition = mapChipField_->GetMapChipPositionByIndex(j, i);
 
-			// ブロック座標を設定
 			worldTransformBlocks_[i][j]->translation_ = blockPosition;
 		}
 	}
@@ -223,11 +219,12 @@ void GameScene::Initialize() {
 void GameScene::Update() {
 
 #ifdef _DEBUG
+
 	if (KamataEngine::Input::GetInstance()->TriggerKey(DIK_TAB)) {
 
-		// デバッグカメラ有効フラグをトグル
 		isDebugCameraActive_ = !isDebugCameraActive_;
 	}
+
 #endif
 
 	// 自キャラの更新
@@ -245,7 +242,6 @@ void GameScene::Update() {
 				continue;
 			}
 
-			// ワールド行列を計算して転送
 			UpdateWorldTransform(*worldTransformBlock);
 		}
 	}
@@ -253,27 +249,22 @@ void GameScene::Update() {
 	// カメラの処理
 	if (isDebugCameraActive_) {
 
-		// デバッグカメラの更新
 		debugCamera_->Update();
 
 		camera_.matView = debugCamera_->GetCamera().matView;
 
 		camera_.matProjection = debugCamera_->GetCamera().matProjection;
 
-		// カメラ行列の転送
 		camera_.TransferMatrix();
 
 	} else {
 
-		// カメラコントローラの更新
 		cameraController_->Update();
 
-		// カメラコントローラのカメラを反映
 		camera_.matView = cameraController_->GetCamera().matView;
 
 		camera_.matProjection = cameraController_->GetCamera().matProjection;
 
-		// カメラ行列を転送
 		camera_.TransferMatrix();
 	}
 }
@@ -302,7 +293,6 @@ void GameScene::Draw() {
 
 GameScene::~GameScene() {
 
-	// ブロック用ワールドトランスフォームの解放
 	for (std::vector<KamataEngine::WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 
 		for (KamataEngine::WorldTransform* worldTransformBlock : worldTransformBlockLine) {
@@ -313,27 +303,12 @@ GameScene::~GameScene() {
 
 	worldTransformBlocks_.clear();
 
-	// マップチップフィールドの解放
 	delete mapChipField_;
-
-	// 天球の解放
 	delete skydome_;
-
-	// 天球用3Dモデルデータの解放
 	delete modelSkydome_;
-
-	// カメラコントローラの解放
 	delete cameraController_;
-
-	// デバッグカメラの解放
 	delete debugCamera_;
-
-	// 自キャラの解放
 	delete player_;
-
-	// 3Dモデルデータの解放
 	delete model_;
-
-	// ブロック用3Dモデルデータの解放
 	delete modelBlock_;
 }

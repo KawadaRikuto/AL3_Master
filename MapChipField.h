@@ -1,4 +1,5 @@
 #pragma once
+
 #include "KamataEngine.h"
 
 #include <cstdint>
@@ -26,6 +27,20 @@ struct MapChipData {
 class MapChipField {
 
 public:
+	// インデックスの組
+	struct IndexSet {
+		uint32_t xIndex;
+		uint32_t yIndex;
+	};
+
+	// 範囲矩形
+	struct Rect {
+		float left;   // 左端
+		float right;  // 右端
+		float bottom; // 下端
+		float top;    // 上端
+	};
+
 	/// <summary>
 	/// マップチップデータをリセットする
 	/// </summary>
@@ -45,6 +60,16 @@ public:
 	/// マップチップ番号から座標を取得する
 	/// </summary>
 	KamataEngine::Vector3 GetMapChipPositionByIndex(uint32_t xIndex, uint32_t yIndex);
+
+	/// <summary>
+	/// 座標からマップチップ番号を取得する
+	/// </summary>
+	IndexSet GetMapChipIndexSetByPosition(const KamataEngine::Vector3& position);
+
+	/// <summary>
+	/// 指定したマップチップの範囲を取得する
+	/// </summary>
+	Rect GetRectByIndex(uint32_t xIndex, uint32_t yIndex);
 
 private:
 	// 1ブロックのサイズ
