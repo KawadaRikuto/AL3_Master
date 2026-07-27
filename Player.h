@@ -107,6 +107,16 @@ private:
 	void CeilingCollision(const CollisionMapInfo& info);
 
 	/// <summary>
+	/// 壁に接触している場合の処理
+	/// </summary>
+	void WallCollision(const CollisionMapInfo& info);
+
+	/// <summary>
+	/// 接地状態の切り替え処理
+	/// </summary>
+	void SwitchGroundState(const CollisionMapInfo& info);
+
+	/// <summary>
 	/// 指定した角の座標を取得
 	/// </summary>
 	KamataEngine::Vector3 CornerPosition(const KamataEngine::Vector3& center, Corner corner);
@@ -139,6 +149,12 @@ private:
 
 	// 速度減衰率
 	static inline const float kAttenuation = 0.1f;
+
+	// 着地時の速度減衰率
+	static inline const float kAttenuationLanding = 0.1f;
+
+	// 壁接触時の速度減衰率
+	static inline const float kAttenuationWall = 0.1f;
 
 	// 最大速度
 	static inline const float kLimitRunSpeed = 0.2f;
