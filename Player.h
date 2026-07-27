@@ -26,6 +26,11 @@ public:
 	/// </summary>
 	void Draw();
 
+	/// <summary>
+	/// ワールドトランスフォームを取得
+	/// </summary>
+	const KamataEngine::WorldTransform& GetWorldTransform() const { return worldTransform_; }
+
 private:
 	// 左右
 	enum class LRDirection {
@@ -69,12 +74,12 @@ private:
 	// 接地状態フラグ
 	bool onGround_ = true;
 
-	// 重力加速度（下方向）
+	// 重力加速度
 	static inline const float kGravityAcceleration = 0.05f;
 
-	// 最大落下速度（下方向）
+	// 最大落下速度
 	static inline const float kLimitFallSpeed = 0.5f;
 
-	// ジャンプ初速（上方向）
+	// ジャンプ初速
 	static inline const float kJumpAcceleration = 1.0f;
 };

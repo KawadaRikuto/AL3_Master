@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CameraController.h"
 #include "KamataEngine.h"
 #include "MapChipField.h"
 #include "Player.h"
@@ -32,6 +33,9 @@ private:
 
 	// カメラ
 	KamataEngine::Camera camera_;
+
+	// カメラコントローラ
+	CameraController* cameraController_ = nullptr;
 
 	// デバッグカメラ有効
 	bool isDebugCameraActive_ = false;

@@ -153,6 +153,30 @@ void GameScene::Initialize() {
 	// 自キャラの初期化
 	player_->Initialize(model_, &camera_, playerPosition);
 
+	// カメラコントローラの生成
+	cameraController_ = new CameraController();
+
+	// カメラコントローラの初期化
+	cameraController_->Initialize();
+
+	// 移動範囲の指定
+	CameraController::Rect cameraArea = {0.0f, 100.0f, 0.0f, 20.0f};
+
+	cameraController_->SetMovableArea(cameraArea);
+
+	// 追従対象をセット
+	cameraController_->SetTarget(player_);
+
+	// リセット（瞬間合わせ）
+	cameraController_->Reset();
+
+	// カメラコントローラのカメラを反映
+	camera_.matView = cameraController_->GetCamera().matView;
+
+	camera_.matProjection = cameraController_->GetCamera().matProjection;
+
+	camera_.TransferMatrix();
+
 	// 天球の生成
 	skydome_ = new Skydome();
 
@@ -162,10 +186,6 @@ void GameScene::Initialize() {
 	// 要素数
 	const uint32_t kNumBlockVertical = 20;
 	const uint32_t kNumBlockHorizontal = 100;
-
-	// ブロック1個分の横幅
-	const float kBlockWidth = 1.0f;
-	const float kBlockHeight = 1.0f;
 
 	// 列数を設定
 	worldTransformBlocks_.resize(kNumBlockVertical);
@@ -191,9 +211,11 @@ void GameScene::Initialize() {
 
 			worldTransformBlocks_[i][j]->Initialize();
 
-			worldTransformBlocks_[i][j]->translation_.x = kBlockWidth * j;
+			// マップチップ番号からブロック座標を取得
+			KamataEngine::Vector3 blockPosition = mapChipField_->GetMapChipPositionByIndex(j, i);
 
-			worldTransformBlocks_[i][j]->translation_.y = kBlockHeight * i;
+			// ブロック座標を設定
+			worldTransformBlocks_[i][j]->translation_ = blockPosition;
 		}
 	}
 }
@@ -243,8 +265,16 @@ void GameScene::Update() {
 
 	} else {
 
-		// 通常カメラの更新
-		camera_.UpdateMatrix();
+		// カメラコントローラの更新
+		cameraController_->Update();
+
+		// カメラコントローラのカメラを反映
+		camera_.matView = cameraController_->GetCamera().matView;
+
+		camera_.matProjection = cameraController_->GetCamera().matProjection;
+
+		// カメラ行列を転送
+		camera_.TransferMatrix();
 	}
 }
 
@@ -281,8 +311,6 @@ GameScene::~GameScene() {
 		}
 	}
 
-
-
 	worldTransformBlocks_.clear();
 
 	// マップチップフィールドの解放
@@ -293,6 +321,9 @@ GameScene::~GameScene() {
 
 	// 天球用3Dモデルデータの解放
 	delete modelSkydome_;
+
+	// カメラコントローラの解放
+	delete cameraController_;
 
 	// デバッグカメラの解放
 	delete debugCamera_;
@@ -305,6 +336,4 @@ GameScene::~GameScene() {
 
 	// ブロック用3Dモデルデータの解放
 	delete modelBlock_;
-
 }
-
