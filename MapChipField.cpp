@@ -71,3 +71,14 @@ void MapChipField::LoadMapChipCsv(const std::string& filePath) {
 }
 
 MapChipType MapChipField::GetMapChipTypeByIndex(uint32_t xIndex, uint32_t yIndex) { return mapChipData_.data[yIndex][xIndex]; }
+
+KamataEngine::Vector3 MapChipField::GetMapChipPositionByIndex(uint32_t xIndex, uint32_t yIndex) {
+
+	KamataEngine::Vector3 position;
+
+	position.x = kBlockWidth * xIndex;
+	position.y = kBlockHeight * (kNumBlockVertical - 1 - yIndex);
+	position.z = 0.0f;
+
+	return position;
+}

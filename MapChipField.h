@@ -1,4 +1,5 @@
 #pragma once
+#include "KamataEngine.h"
 
 #include <cstdint>
 #include <string>
@@ -39,6 +40,11 @@ public:
 	/// 指定したマスのマップチップを取得
 	/// </summary>
 	MapChipType GetMapChipTypeByIndex(uint32_t xIndex, uint32_t yIndex);
+
+	/// <summary>
+	/// マップチップ番号から座標を取得する
+	/// </summary>
+	KamataEngine::Vector3 GetMapChipPositionByIndex(uint32_t xIndex, uint32_t yIndex);
 
 private:
 	// 1ブロックのサイズ
