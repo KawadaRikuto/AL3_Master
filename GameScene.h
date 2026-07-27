@@ -22,6 +22,12 @@ public:
 	void Draw();
 
 private:
+	/// <summary>
+	/// ブロックの生成
+	/// </summary>
+	void GenerateBlocks();
+
+private:
 	// 3Dモデルデータ
 	KamataEngine::Model* model_ = nullptr;
 

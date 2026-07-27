@@ -185,21 +185,27 @@ void GameScene::Initialize() {
 	// 天球の初期化
 	skydome_->Initialize(modelSkydome_, &camera_);
 
-	const uint32_t kNumBlockVertical = 20;
-	const uint32_t kNumBlockHorizontal = 100;
+	// ブロックの生成
+	GenerateBlocks();
+}
 
-	worldTransformBlocks_.resize(kNumBlockVertical);
+void GameScene::GenerateBlocks() {
 
-	for (uint32_t i = 0; i < kNumBlockVertical; ++i) {
+	// 縦方向の要素数を設定
+	worldTransformBlocks_.resize(MapChipField::kNumBlockVertical);
 
-		worldTransformBlocks_[i].resize(kNumBlockHorizontal);
+	for (uint32_t i = 0; i < MapChipField::kNumBlockVertical; ++i) {
+
+		// 横方向の要素数を設定
+		worldTransformBlocks_[i].resize(MapChipField::kNumBlockHorizontal);
 	}
 
 	// ブロックの生成
-	for (uint32_t i = 0; i < kNumBlockVertical; ++i) {
+	for (uint32_t i = 0; i < MapChipField::kNumBlockVertical; ++i) {
 
-		for (uint32_t j = 0; j < kNumBlockHorizontal; ++j) {
+		for (uint32_t j = 0; j < MapChipField::kNumBlockHorizontal; ++j) {
 
+			// 空白なら生成しない
 			if (mapChipField_->GetMapChipTypeByIndex(j, i) == MapChipType::kBlank) {
 
 				continue;
@@ -209,8 +215,10 @@ void GameScene::Initialize() {
 
 			worldTransformBlocks_[i][j]->Initialize();
 
+			// マップチップ番号から座標を取得
 			KamataEngine::Vector3 blockPosition = mapChipField_->GetMapChipPositionByIndex(j, i);
 
+			// ブロック座標を設定
 			worldTransformBlocks_[i][j]->translation_ = blockPosition;
 		}
 	}
