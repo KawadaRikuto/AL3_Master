@@ -10,6 +10,7 @@
 
 #include <3d/DebugCamera.h>
 
+#include <list>
 #include <vector>
 
 // ゲームシーン
@@ -27,6 +28,11 @@ private:
 	/// ブロックの生成
 	/// </summary>
 	void GenerateBlocks();
+
+	/// <summary>
+	/// 全ての当たり判定を行う
+	/// </summary>
+	void CheckAllCollisions();
 
 private:
 	// 自キャラ用3Dモデルデータ
@@ -57,7 +63,7 @@ private:
 	Player* player_ = nullptr;
 
 	// 敵
-	Enemy* enemy_ = nullptr;
+	std::list<Enemy*> enemies_;
 
 	// 天球
 	Skydome* skydome_ = nullptr;
@@ -65,6 +71,6 @@ private:
 	// マップチップフィールド
 	MapChipField* mapChipField_ = nullptr;
 
-	// ブロック用のワールドトランスフォーム
+	// ブロック用ワールドトランスフォーム
 	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
 };

@@ -4,6 +4,7 @@
 
 #include "MapChipField.h"
 #include "WorldTransformUpdate.h"
+#include "Enemy.h"
 
 #include <algorithm>
 #include <array>
@@ -619,4 +620,46 @@ void Player::Draw() {
 
 	// 3Dモデルを描画
 	model_->Draw(worldTransform_, *camera_);
+}
+
+KamataEngine::Vector3 Player::GetWorldPosition() {
+
+	// ワールド座標を入れる変数
+	KamataEngine::Vector3 worldPosition;
+
+	// ワールド行列の平行移動成分を取得
+	worldPosition.x = worldTransform_.matWorld_.m[3][0];
+	worldPosition.y = worldTransform_.matWorld_.m[3][1];
+	worldPosition.z = worldTransform_.matWorld_.m[3][2];
+
+	return worldPosition;
+}
+
+AABB Player::GetAABB() {
+
+	KamataEngine::Vector3 worldPosition = GetWorldPosition();
+
+	AABB aabb;
+
+	aabb.min = {
+	    worldPosition.x - kWidth / 2.0f,
+	    worldPosition.y - kHeight / 2.0f,
+	    worldPosition.z - kWidth / 2.0f,
+	};
+
+	aabb.max = {
+	    worldPosition.x + kWidth / 2.0f,
+	    worldPosition.y + kHeight / 2.0f,
+	    worldPosition.z + kWidth / 2.0f,
+	};
+
+	return aabb;
+}
+
+void Player::OnCollision(const Enemy* enemy) {
+
+	(void)enemy;
+
+	// ジャンプ開始
+	velocity_.y += 0.5f;
 }

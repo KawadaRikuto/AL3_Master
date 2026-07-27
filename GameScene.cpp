@@ -2,6 +2,23 @@
 
 #include <cmath>
 
+namespace {
+
+/// <summary>
+/// AABB同士の交差判定
+/// </summary>
+bool IsCollision(const AABB& aabb1, const AABB& aabb2) {
+
+	if (aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x && aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y && aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z) {
+
+		return true;
+	}
+
+	return false;
+}
+
+} // namespace
+
 KamataEngine::Matrix4x4 Multiply(const KamataEngine::Matrix4x4& m1, const KamataEngine::Matrix4x4& m2) {
 
 	KamataEngine::Matrix4x4 result{};
@@ -90,15 +107,10 @@ KamataEngine::Matrix4x4 MakeTranslateMatrix(const KamataEngine::Vector3& transla
 KamataEngine::Matrix4x4 MakeAffineMatrix(const KamataEngine::Vector3& scale, const KamataEngine::Vector3& rotation, const KamataEngine::Vector3& translation) {
 
 	KamataEngine::Matrix4x4 scaleMatrix = MakeScaleMatrix(scale);
-
 	KamataEngine::Matrix4x4 rotateXMatrix = MakeRotateXMatrix(rotation.x);
-
 	KamataEngine::Matrix4x4 rotateYMatrix = MakeRotateYMatrix(rotation.y);
-
 	KamataEngine::Matrix4x4 rotateZMatrix = MakeRotateZMatrix(rotation.z);
-
 	KamataEngine::Matrix4x4 translateMatrix = MakeTranslateMatrix(translation);
-
 	KamataEngine::Matrix4x4 rotateMatrix = Multiply(rotateXMatrix, Multiply(rotateYMatrix, rotateZMatrix));
 
 	return Multiply(Multiply(scaleMatrix, rotateMatrix), translateMatrix);
@@ -107,70 +119,42 @@ KamataEngine::Matrix4x4 MakeAffineMatrix(const KamataEngine::Vector3& scale, con
 void UpdateWorldTransform(KamataEngine::WorldTransform& worldTransform) {
 
 	worldTransform.matWorld_ = MakeAffineMatrix(worldTransform.scale_, worldTransform.rotation_, worldTransform.translation_);
-
 	worldTransform.TransferMatrix();
 }
 
 void GameScene::Initialize() {
 
-	// マップチップフィールドの生成
 	mapChipField_ = new MapChipField();
-
-	// CSVファイルからマップチップデータを読み込む
 	mapChipField_->LoadMapChipCsv("Resources/blocks.csv");
 
-	// 自キャラ用3Dモデルデータの生成
 	model_ = KamataEngine::Model::CreateFromOBJ("player", true);
-
-	// ブロック用3Dモデルデータの生成
 	modelBlock_ = KamataEngine::Model::CreateFromOBJ("block", true);
-
-	// 天球用3Dモデルデータの生成
 	modelSkydome_ = KamataEngine::Model::CreateFromOBJ("skydome", true);
-
-	// 敵用3Dモデルデータの生成
 	modelEnemy_ = KamataEngine::Model::CreateFromOBJ("enemy", true);
 
-	// カメラのfarZを変更
 	camera_.farZ = 1000.0f;
-
-	// カメラの初期化
 	camera_.Initialize();
 
-	// デバッグカメラの生成
 	debugCamera_ = new KamataEngine::DebugCamera(KamataEngine::WinApp::kWindowWidth, KamataEngine::WinApp::kWindowHeight);
-
-	// デバッグカメラのfarZを変更
 	debugCamera_->SetFarZ(1000.0f);
 
-	// 自キャラの生成
 	player_ = new Player();
-
-	// 座標をマップチップ番号で指定
 	KamataEngine::Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(1, 18);
-
-	// 自キャラの初期化
 	player_->Initialize(model_, &camera_, playerPosition);
-
-	// マップチップデータをセット
 	player_->SetMapChipField(mapChipField_);
 
-	// 敵の生成
-	enemy_ = new Enemy();
+	const int32_t kNumEnemies = 3;
+	for (int32_t i = 0; i < kNumEnemies; ++i) {
 
-	// 敵の初期座標
-	KamataEngine::Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(10, 18);
+		Enemy* newEnemy = new Enemy();
+		KamataEngine::Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(10 + i * 5, 18);
+		newEnemy->Initialize(modelEnemy_, &camera_, enemyPosition);
+		enemies_.push_back(newEnemy);
+	}
 
-	// 敵の初期化
-	enemy_->Initialize(modelEnemy_, &camera_, enemyPosition);
-
-	// カメラコントローラの生成
 	cameraController_ = new CameraController();
-
-	// カメラコントローラの初期化
 	cameraController_->Initialize();
 
-	// 移動範囲の指定
 	CameraController::Rect cameraArea = {
 	    0.0f,
 	    100.0f,
@@ -179,60 +163,38 @@ void GameScene::Initialize() {
 	};
 
 	cameraController_->SetMovableArea(cameraArea);
-
-	// 追従対象をセット
 	cameraController_->SetTarget(player_);
-
-	// リセット
 	cameraController_->Reset();
 
-	// カメラコントローラのカメラを反映
 	camera_.matView = cameraController_->GetCamera().matView;
-
 	camera_.matProjection = cameraController_->GetCamera().matProjection;
-
 	camera_.TransferMatrix();
 
-	// 天球の生成
 	skydome_ = new Skydome();
-
-	// 天球の初期化
 	skydome_->Initialize(modelSkydome_, &camera_);
 
-	// ブロックの生成
 	GenerateBlocks();
 }
 
 void GameScene::GenerateBlocks() {
 
-	// 縦方向の要素数を設定
 	worldTransformBlocks_.resize(MapChipField::kNumBlockVertical);
 
 	for (uint32_t i = 0; i < MapChipField::kNumBlockVertical; ++i) {
-
-		// 横方向の要素数を設定
 		worldTransformBlocks_[i].resize(MapChipField::kNumBlockHorizontal);
 	}
 
-	// ブロックの生成
 	for (uint32_t i = 0; i < MapChipField::kNumBlockVertical; ++i) {
-
 		for (uint32_t j = 0; j < MapChipField::kNumBlockHorizontal; ++j) {
 
-			// 空白なら生成しない
 			if (mapChipField_->GetMapChipTypeByIndex(j, i) == MapChipType::kBlank) {
-
 				continue;
 			}
 
 			worldTransformBlocks_[i][j] = new KamataEngine::WorldTransform();
-
 			worldTransformBlocks_[i][j]->Initialize();
 
-			// マップチップ番号から座標を取得
 			KamataEngine::Vector3 blockPosition = mapChipField_->GetMapChipPositionByIndex(j, i);
-
-			// ブロック座標を設定
 			worldTransformBlocks_[i][j]->translation_ = blockPosition;
 		}
 	}
@@ -241,32 +203,26 @@ void GameScene::GenerateBlocks() {
 void GameScene::Update() {
 
 #ifdef _DEBUG
-
 	if (KamataEngine::Input::GetInstance()->TriggerKey(DIK_TAB)) {
-
 		isDebugCameraActive_ = !isDebugCameraActive_;
 	}
-
 #endif
 
-	// 自キャラの更新
 	if (player_) {
 		player_->Update();
 	}
 
-	// 敵の更新
-	if (enemy_) {
-		enemy_->Update();
+	for (Enemy* enemy : enemies_) {
+		if (enemy) {
+			enemy->Update();
+		}
 	}
 
-	// 天球の更新
 	if (skydome_) {
 		skydome_->Update();
 	}
 
-	// ブロックの更新
 	for (std::vector<KamataEngine::WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
-
 		for (KamataEngine::WorldTransform* worldTransformBlock : worldTransformBlockLine) {
 
 			if (!worldTransformBlock) {
@@ -277,51 +233,68 @@ void GameScene::Update() {
 		}
 	}
 
-	// カメラの処理
 	if (isDebugCameraActive_) {
 
-		// デバッグカメラの更新
 		debugCamera_->Update();
-
 		camera_.matView = debugCamera_->GetCamera().matView;
-
 		camera_.matProjection = debugCamera_->GetCamera().matProjection;
-
 		camera_.TransferMatrix();
 
 	} else {
 
-		// カメラコントローラの更新
 		cameraController_->Update();
-
 		camera_.matView = cameraController_->GetCamera().matView;
-
 		camera_.matProjection = cameraController_->GetCamera().matProjection;
-
 		camera_.TransferMatrix();
 	}
+
+	CheckAllCollisions();
+}
+
+void GameScene::CheckAllCollisions() {
+
+#pragma region 自キャラと敵キャラの当たり判定
+
+	AABB aabb1;
+	AABB aabb2;
+
+	aabb1 = player_->GetAABB();
+
+	for (Enemy* enemy : enemies_) {
+
+		if (!enemy) {
+			continue;
+		}
+
+		aabb2 = enemy->GetAABB();
+
+		if (IsCollision(aabb1, aabb2)) {
+
+			player_->OnCollision(enemy);
+			enemy->OnCollision(player_);
+		}
+	}
+
+#pragma endregion
 }
 
 void GameScene::Draw() {
 
-	// 天球の描画
 	if (skydome_) {
 		skydome_->Draw();
 	}
 
-	// 自キャラの描画
 	if (player_) {
 		player_->Draw();
 	}
 
-	// 敵の描画
-	if (enemy_) {
-		enemy_->Draw();
+	for (Enemy* enemy : enemies_) {
+		if (enemy) {
+			enemy->Draw();
+		}
 	}
 
-	// ブロックの描画
 	for (std::vector<KamataEngine::WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
-
 		for (KamataEngine::WorldTransform* worldTransformBlock : worldTransformBlockLine) {
 
 			if (!worldTransformBlock) {
@@ -335,44 +308,27 @@ void GameScene::Draw() {
 
 GameScene::~GameScene() {
 
-	// ブロック用ワールドトランスフォームの解放
 	for (std::vector<KamataEngine::WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
-
 		for (KamataEngine::WorldTransform* worldTransformBlock : worldTransformBlockLine) {
-
 			delete worldTransformBlock;
 		}
 	}
 
 	worldTransformBlocks_.clear();
 
-	// マップチップフィールドの解放
+	for (Enemy* enemy : enemies_) {
+		delete enemy;
+	}
+
+	enemies_.clear();
+
 	delete mapChipField_;
-
-	// 天球の解放
 	delete skydome_;
-
-	// 天球用3Dモデルデータの解放
 	delete modelSkydome_;
-
-	// カメラコントローラの解放
 	delete cameraController_;
-
-	// デバッグカメラの解放
 	delete debugCamera_;
-
-	// 敵の解放
-	delete enemy_;
-
-	// 敵用3Dモデルデータの解放
 	delete modelEnemy_;
-
-	// 自キャラの解放
 	delete player_;
-
-	// 自キャラ用3Dモデルデータの解放
 	delete model_;
-
-	// ブロック用3Dモデルデータの解放
 	delete modelBlock_;
 }

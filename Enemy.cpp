@@ -1,5 +1,6 @@
 #include "Enemy.h"
 
+#include "Player.h"
 #include "WorldTransformUpdate.h"
 
 #include <cassert>
@@ -51,19 +52,19 @@ void Enemy::Update() {
 	// タイマーを加算
 	walkTimer_ += 1.0f / 60.0f;
 
-	// サインカーブで繰り返す値を計算
+	// サインカーブによる歩行アニメーション
 	float param = std::sin(2.0f * std::numbers::pi_v<float> * walkTimer_ / kWalkMotionTime);
 
-	// -1.0f～1.0fを0.0f～1.0fへ変換
+	// -1.0f～1.0fを0.0f～1.0fに変換
 	float t = (param + 1.0f) / 2.0f;
 
 	// 最初の角度と最後の角度を補間
 	float walkMotionAngle = Lerp(kWalkMotionAngleStart, kWalkMotionAngleEnd, t);
 
-	// 度をラジアンへ変換してX軸回転を設定
+	// 度をラジアンに変換してX軸回転を設定
 	worldTransform_.rotation_.x = walkMotionAngle * std::numbers::pi_v<float> / 180.0f;
 
-	// ワールド行列を更新する
+	// ワールド行列の更新
 	UpdateWorldTransform(worldTransform_);
 }
 
@@ -72,3 +73,39 @@ void Enemy::Draw() {
 	// 3Dモデルを描画
 	model_->Draw(worldTransform_, *camera_);
 }
+
+KamataEngine::Vector3 Enemy::GetWorldPosition() {
+
+	// ワールド座標を入れる変数
+	KamataEngine::Vector3 worldPosition;
+
+	// ワールド行列の平行移動成分を取得
+	worldPosition.x = worldTransform_.matWorld_.m[3][0];
+	worldPosition.y = worldTransform_.matWorld_.m[3][1];
+	worldPosition.z = worldTransform_.matWorld_.m[3][2];
+
+	return worldPosition;
+}
+
+AABB Enemy::GetAABB() {
+
+	KamataEngine::Vector3 worldPosition = GetWorldPosition();
+
+	AABB aabb;
+
+	aabb.min = {
+	    worldPosition.x - kWidth / 2.0f,
+	    worldPosition.y - kHeight / 2.0f,
+	    worldPosition.z - kWidth / 2.0f,
+	};
+
+	aabb.max = {
+	    worldPosition.x + kWidth / 2.0f,
+	    worldPosition.y + kHeight / 2.0f,
+	    worldPosition.z + kWidth / 2.0f,
+	};
+
+	return aabb;
+}
+
+void Enemy::OnCollision(const Player* player) { (void)player; }
