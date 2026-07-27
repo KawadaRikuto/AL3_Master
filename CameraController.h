@@ -61,4 +61,21 @@ private:
 
 	// カメラ移動範囲
 	Rect movableArea_ = {0.0f, 100.0f, 0.0f, 100.0f};
+
+	// カメラの目標座標
+	KamataEngine::Vector3 targetPosition_ = {};
+
+	// 座標補間割合
+	static inline const float kInterpolationRate = 0.1f;
+
+	// 速度掛け率
+	static inline const float kVelocityBias = 6.0f;
+
+	// 追従対象の各方向へのカメラ移動範囲
+	static inline const Rect targetMargin_ = {
+	    -8.0f, // 左マージン
+	    8.0f,  // 右マージン
+	    -4.0f, // 下マージン
+	    4.0f   // 上マージン
+	};
 };

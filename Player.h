@@ -11,9 +11,6 @@ public:
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	/// <param name="model">モデル</param>
-	/// <param name="camera">カメラ</param>
-	/// <param name="position">初期座標</param>
 	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position);
 
 	/// <summary>
@@ -25,6 +22,11 @@ public:
 	/// 描画
 	/// </summary>
 	void Draw();
+
+	/// <summary>
+	/// 速度を取得
+	/// </summary>
+	const KamataEngine::Vector3 GetVelocity() const { return velocity_; }
 
 	/// <summary>
 	/// ワールドトランスフォームを取得
