@@ -128,6 +128,9 @@ void GameScene::Initialize() {
 	// 天球用3Dモデルデータの生成
 	modelSkydome_ = KamataEngine::Model::CreateFromOBJ("skydome", true);
 
+	// 敵用3Dモデルデータの生成
+	modelEnemy_ = KamataEngine::Model::CreateFromOBJ("enemy", true);
+
 	// カメラのfarZを変更
 	camera_.farZ = 1000.0f;
 
@@ -137,6 +140,7 @@ void GameScene::Initialize() {
 	// デバッグカメラの生成
 	debugCamera_ = new KamataEngine::DebugCamera(KamataEngine::WinApp::kWindowWidth, KamataEngine::WinApp::kWindowHeight);
 
+	// デバッグカメラのfarZを変更
 	debugCamera_->SetFarZ(1000.0f);
 
 	// 自キャラの生成
@@ -150,6 +154,15 @@ void GameScene::Initialize() {
 
 	// マップチップデータをセット
 	player_->SetMapChipField(mapChipField_);
+
+	// 敵の生成
+	enemy_ = new Enemy();
+
+	// 敵の初期座標
+	KamataEngine::Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(10, 18);
+
+	// 敵の初期化
+	enemy_->Initialize(modelEnemy_, &camera_, enemyPosition);
 
 	// カメラコントローラの生成
 	cameraController_ = new CameraController();
@@ -173,6 +186,7 @@ void GameScene::Initialize() {
 	// リセット
 	cameraController_->Reset();
 
+	// カメラコントローラのカメラを反映
 	camera_.matView = cameraController_->GetCamera().matView;
 
 	camera_.matProjection = cameraController_->GetCamera().matProjection;
@@ -236,10 +250,19 @@ void GameScene::Update() {
 #endif
 
 	// 自キャラの更新
-	player_->Update();
+	if (player_) {
+		player_->Update();
+	}
+
+	// 敵の更新
+	if (enemy_) {
+		enemy_->Update();
+	}
 
 	// 天球の更新
-	skydome_->Update();
+	if (skydome_) {
+		skydome_->Update();
+	}
 
 	// ブロックの更新
 	for (std::vector<KamataEngine::WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
@@ -257,6 +280,7 @@ void GameScene::Update() {
 	// カメラの処理
 	if (isDebugCameraActive_) {
 
+		// デバッグカメラの更新
 		debugCamera_->Update();
 
 		camera_.matView = debugCamera_->GetCamera().matView;
@@ -267,6 +291,7 @@ void GameScene::Update() {
 
 	} else {
 
+		// カメラコントローラの更新
 		cameraController_->Update();
 
 		camera_.matView = cameraController_->GetCamera().matView;
@@ -280,10 +305,19 @@ void GameScene::Update() {
 void GameScene::Draw() {
 
 	// 天球の描画
-	skydome_->Draw();
+	if (skydome_) {
+		skydome_->Draw();
+	}
 
 	// 自キャラの描画
-	player_->Draw();
+	if (player_) {
+		player_->Draw();
+	}
+
+	// 敵の描画
+	if (enemy_) {
+		enemy_->Draw();
+	}
 
 	// ブロックの描画
 	for (std::vector<KamataEngine::WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
@@ -301,6 +335,7 @@ void GameScene::Draw() {
 
 GameScene::~GameScene() {
 
+	// ブロック用ワールドトランスフォームの解放
 	for (std::vector<KamataEngine::WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 
 		for (KamataEngine::WorldTransform* worldTransformBlock : worldTransformBlockLine) {
@@ -311,12 +346,33 @@ GameScene::~GameScene() {
 
 	worldTransformBlocks_.clear();
 
+	// マップチップフィールドの解放
 	delete mapChipField_;
+
+	// 天球の解放
 	delete skydome_;
+
+	// 天球用3Dモデルデータの解放
 	delete modelSkydome_;
+
+	// カメラコントローラの解放
 	delete cameraController_;
+
+	// デバッグカメラの解放
 	delete debugCamera_;
+
+	// 敵の解放
+	delete enemy_;
+
+	// 敵用3Dモデルデータの解放
+	delete modelEnemy_;
+
+	// 自キャラの解放
 	delete player_;
+
+	// 自キャラ用3Dモデルデータの解放
 	delete model_;
+
+	// ブロック用3Dモデルデータの解放
 	delete modelBlock_;
 }

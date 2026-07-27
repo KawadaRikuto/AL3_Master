@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CameraController.h"
+#include "Enemy.h"
 #include "KamataEngine.h"
 #include "MapChipField.h"
 #include "Player.h"
@@ -28,7 +29,7 @@ private:
 	void GenerateBlocks();
 
 private:
-	// 3Dモデルデータ
+	// 自キャラ用3Dモデルデータ
 	KamataEngine::Model* model_ = nullptr;
 
 	// ブロック用3Dモデルデータ
@@ -36,6 +37,9 @@ private:
 
 	// 天球用3Dモデルデータ
 	KamataEngine::Model* modelSkydome_ = nullptr;
+
+	// 敵用3Dモデルデータ
+	KamataEngine::Model* modelEnemy_ = nullptr;
 
 	// カメラ
 	KamataEngine::Camera camera_;
@@ -51,6 +55,9 @@ private:
 
 	// 自キャラ
 	Player* player_ = nullptr;
+
+	// 敵
+	Enemy* enemy_ = nullptr;
 
 	// 天球
 	Skydome* skydome_ = nullptr;
