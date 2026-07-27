@@ -132,6 +132,9 @@ void GameScene::Initialize() {
 	modelSkydome_ = KamataEngine::Model::CreateFromOBJ("skydome", true);
 	modelEnemy_ = KamataEngine::Model::CreateFromOBJ("enemy", true);
 
+	// デスパーティクル用3Dモデルデータの生成
+	modelDeathParticle_ = KamataEngine::Model::CreateFromOBJ("deathParticle", true);
+
 	camera_.farZ = 1000.0f;
 	camera_.Initialize();
 
@@ -139,18 +142,30 @@ void GameScene::Initialize() {
 	debugCamera_->SetFarZ(1000.0f);
 
 	player_ = new Player();
-	KamataEngine::Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(1, 18);
+
+	KamataEngine::Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(10, 16);
+
 	player_->Initialize(model_, &camera_, playerPosition);
+
 	player_->SetMapChipField(mapChipField_);
 
 	const int32_t kNumEnemies = 3;
+
 	for (int32_t i = 0; i < kNumEnemies; ++i) {
 
 		Enemy* newEnemy = new Enemy();
+
 		KamataEngine::Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(10 + i * 5, 18);
+
 		newEnemy->Initialize(modelEnemy_, &camera_, enemyPosition);
+
 		enemies_.push_back(newEnemy);
 	}
+
+	// 仮の生成処理。後で消す
+	deathParticles_ = new DeathParticles();
+
+	deathParticles_->Initialize(modelDeathParticle_, &camera_, playerPosition);camera_, player_->GetWorldPosition();
 
 	cameraController_ = new CameraController();
 	cameraController_->Initialize();
@@ -216,6 +231,11 @@ void GameScene::Update() {
 		if (enemy) {
 			enemy->Update();
 		}
+	}
+
+	// デスパーティクルが存在するなら更新
+	if (deathParticles_) {
+		deathParticles_->Update();
 	}
 
 	if (skydome_) {
@@ -294,6 +314,11 @@ void GameScene::Draw() {
 		}
 	}
 
+	// デスパーティクルが存在するなら描画
+	if (deathParticles_) {
+		deathParticles_->Draw();
+	}
+
 	for (std::vector<KamataEngine::WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 		for (KamataEngine::WorldTransform* worldTransformBlock : worldTransformBlockLine) {
 
@@ -322,12 +347,19 @@ GameScene::~GameScene() {
 
 	enemies_.clear();
 
+	// デスパーティクルの解放
+	delete deathParticles_;
+
 	delete mapChipField_;
 	delete skydome_;
 	delete modelSkydome_;
 	delete cameraController_;
 	delete debugCamera_;
 	delete modelEnemy_;
+
+	// デスパーティクル用3Dモデルデータの解放
+	delete modelDeathParticle_;
+
 	delete player_;
 	delete model_;
 	delete modelBlock_;

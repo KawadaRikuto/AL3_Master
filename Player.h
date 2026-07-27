@@ -58,6 +58,7 @@ public:
 	/// </summary>
 	void OnCollision(const Enemy* enemy);
 
+
 private:
 	// 左右
 	enum class LRDirection {

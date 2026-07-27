@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CameraController.h"
+#include "DeathParticles.h"
 #include "Enemy.h"
 #include "KamataEngine.h"
 #include "MapChipField.h"
@@ -47,6 +48,9 @@ private:
 	// 敵用3Dモデルデータ
 	KamataEngine::Model* modelEnemy_ = nullptr;
 
+	// デスパーティクル用3Dモデルデータ
+	KamataEngine::Model* modelDeathParticle_ = nullptr;
+
 	// カメラ
 	KamataEngine::Camera camera_;
 
@@ -64,6 +68,9 @@ private:
 
 	// 敵
 	std::list<Enemy*> enemies_;
+
+	// デスパーティクル
+	DeathParticles* deathParticles_ = nullptr;
 
 	// 天球
 	Skydome* skydome_ = nullptr;
