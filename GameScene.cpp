@@ -117,6 +117,12 @@ void UpdateWorldTransform(KamataEngine::WorldTransform& worldTransform) {
 
 void GameScene::Initialize() {
 
+	// マップチップフィールドの生成
+	mapChipField_ = new MapChipField();
+
+	// CSVファイルからマップチップデータを読み込む
+	mapChipField_->LoadMapChipCsv("Resources/blocks.csv");
+
 	// 自キャラ用3Dモデルデータの生成
 	model_ = KamataEngine::Model::CreateFromOBJ("player", true);
 
@@ -150,8 +156,8 @@ void GameScene::Initialize() {
 	skydome_->Initialize(modelSkydome_, &camera_);
 
 	// 要素数
-	const uint32_t kNumBlockVertical = 10;
-	const uint32_t kNumBlockHorizontal = 20;
+	const uint32_t kNumBlockVertical = 20;
+	const uint32_t kNumBlockHorizontal = 100;
 
 	// ブロック1個分の横幅
 	const float kBlockWidth = 1.0f;
@@ -171,8 +177,9 @@ void GameScene::Initialize() {
 
 		for (uint32_t j = 0; j < kNumBlockHorizontal; ++j) {
 
-			// 1マスおきに穴を開ける
-			if ((i + j) % 2 == 1) {
+			// CSV上で空白になっているマスにはブロックを生成しない
+			if (mapChipField_->GetMapChipTypeByIndex(j, i) == MapChipType::kBlank) {
+
 				continue;
 			}
 
@@ -270,7 +277,12 @@ GameScene::~GameScene() {
 		}
 	}
 
+
+
 	worldTransformBlocks_.clear();
+
+	// マップチップフィールドの解放
+	delete mapChipField_;
 
 	// 天球の解放
 	delete skydome_;
@@ -289,4 +301,6 @@ GameScene::~GameScene() {
 
 	// ブロック用3Dモデルデータの解放
 	delete modelBlock_;
+
 }
+

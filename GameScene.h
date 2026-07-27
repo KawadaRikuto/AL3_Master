@@ -1,6 +1,7 @@
 #pragma once
 
 #include "KamataEngine.h"
+#include "MapChipField.h"
 #include "Player.h"
 #include "Skydome.h"
 #include "WorldTransformUpdate.h"
@@ -13,20 +14,13 @@
 class GameScene {
 
 public:
-	// デストラクタ
 	~GameScene();
 
-	// 初期化
 	void Initialize();
-
-	// 更新
 	void Update();
-
-	// 描画
 	void Draw();
 
 private:
-
 	// 3Dモデルデータ
 	KamataEngine::Model* model_ = nullptr;
 
@@ -50,6 +44,9 @@ private:
 
 	// 天球
 	Skydome* skydome_ = nullptr;
+
+	// マップチップフィールド
+	MapChipField* mapChipField_ = nullptr;
 
 	// ブロック用のワールドトランスフォーム
 	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
