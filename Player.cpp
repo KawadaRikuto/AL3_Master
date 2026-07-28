@@ -23,20 +23,45 @@ float EaseInOut(float start, float end, float t) {
 	return start + (end - start) * t;
 }
 
+/// <summary>
+/// イーズイン補間
+/// </summary>
+float EaseIn(float start, float end, float t) {
+
+	t = t * t;
+
+	return start + (end - start) * t;
+}
+
+/// <summary>
+/// イーズアウト補間
+/// </summary>
+float EaseOut(float start, float end, float t) {
+
+	t = 1.0f - (1.0f - t) * (1.0f - t);
+
+	return start + (end - start) * t;
+}
+
 } // namespace
 
-void Player::Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position) {
+void Player::Initialize(KamataEngine::Model* model, KamataEngine::Model* modelAttack, KamataEngine::Camera* camera, const KamataEngine::Vector3& position) {
 
 	// NULLポインタチェック
 	assert(model);
+	assert(modelAttack);
 	assert(camera);
 
 	// 引数として受け取ったデータをメンバ変数に記録する
 	model_ = model;
+	modelAttack_ = modelAttack;
 	camera_ = camera;
 
 	// ワールド変換の初期化
 	worldTransform_.Initialize();
+
+	// 攻撃エフェクト用ワールド変換の初期化
+	worldTransformAttack_.Initialize();
 
 	// 初期座標を設定
 	worldTransform_.translation_ = position;
@@ -185,10 +210,13 @@ void Player::MapCollisionUp(CollisionMapInfo& info) {
 	KamataEngine::Vector3 centerNew = {};
 
 	centerNew.x = worldTransform_.translation_.x + info.move.x;
+
 	centerNew.y = worldTransform_.translation_.y + info.move.y;
+
 	centerNew.z = worldTransform_.translation_.z + info.move.z;
 
 	for (uint32_t i = 0; i < positionsNew.size(); ++i) {
+
 		positionsNew[i] = CornerPosition(centerNew, static_cast<Corner>(i));
 	}
 
@@ -203,6 +231,7 @@ void Player::MapCollisionUp(CollisionMapInfo& info) {
 	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
 
 	if (mapChipType == MapChipType::kBlock) {
+
 		hit = true;
 	}
 
@@ -212,6 +241,7 @@ void Player::MapCollisionUp(CollisionMapInfo& info) {
 	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
 
 	if (mapChipType == MapChipType::kBlock) {
+
 		hit = true;
 	}
 
@@ -254,10 +284,13 @@ void Player::MapCollisionDown(CollisionMapInfo& info) {
 	KamataEngine::Vector3 centerNew = {};
 
 	centerNew.x = worldTransform_.translation_.x + info.move.x;
+
 	centerNew.y = worldTransform_.translation_.y + info.move.y;
+
 	centerNew.z = worldTransform_.translation_.z + info.move.z;
 
 	for (uint32_t i = 0; i < positionsNew.size(); ++i) {
+
 		positionsNew[i] = CornerPosition(centerNew, static_cast<Corner>(i));
 	}
 
@@ -332,10 +365,13 @@ void Player::MapCollisionRight(CollisionMapInfo& info) {
 	KamataEngine::Vector3 centerNew = {};
 
 	centerNew.x = worldTransform_.translation_.x + info.move.x;
+
 	centerNew.y = worldTransform_.translation_.y + info.move.y;
+
 	centerNew.z = worldTransform_.translation_.z + info.move.z;
 
 	for (uint32_t i = 0; i < positionsNew.size(); ++i) {
+
 		positionsNew[i] = CornerPosition(centerNew, static_cast<Corner>(i));
 	}
 
@@ -350,6 +386,7 @@ void Player::MapCollisionRight(CollisionMapInfo& info) {
 	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
 
 	if (mapChipType == MapChipType::kBlock) {
+
 		hit = true;
 	}
 
@@ -359,6 +396,7 @@ void Player::MapCollisionRight(CollisionMapInfo& info) {
 	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
 
 	if (mapChipType == MapChipType::kBlock) {
+
 		hit = true;
 	}
 
@@ -401,10 +439,13 @@ void Player::MapCollisionLeft(CollisionMapInfo& info) {
 	KamataEngine::Vector3 centerNew = {};
 
 	centerNew.x = worldTransform_.translation_.x + info.move.x;
+
 	centerNew.y = worldTransform_.translation_.y + info.move.y;
+
 	centerNew.z = worldTransform_.translation_.z + info.move.z;
 
 	for (uint32_t i = 0; i < positionsNew.size(); ++i) {
+
 		positionsNew[i] = CornerPosition(centerNew, static_cast<Corner>(i));
 	}
 
@@ -419,6 +460,7 @@ void Player::MapCollisionLeft(CollisionMapInfo& info) {
 	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
 
 	if (mapChipType == MapChipType::kBlock) {
+
 		hit = true;
 	}
 
@@ -428,6 +470,7 @@ void Player::MapCollisionLeft(CollisionMapInfo& info) {
 	mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
 
 	if (mapChipType == MapChipType::kBlock) {
+
 		hit = true;
 	}
 
@@ -517,6 +560,7 @@ void Player::SwitchGroundState(const CollisionMapInfo& info) {
 			mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
 
 			if (mapChipType == MapChipType::kBlock) {
+
 				hit = true;
 			}
 
@@ -532,6 +576,7 @@ void Player::SwitchGroundState(const CollisionMapInfo& info) {
 			mapChipType = mapChipField_->GetMapChipTypeByIndex(indexSet.xIndex, indexSet.yIndex);
 
 			if (mapChipType == MapChipType::kBlock) {
+
 				hit = true;
 			}
 
@@ -561,6 +606,67 @@ void Player::SwitchGroundState(const CollisionMapInfo& info) {
 }
 
 void Player::Update() {
+
+	// 振るまい変更リクエストがある
+	if (behaviorRequest_ != Behavior::kUnknown) {
+
+		// 振るまいを変更する
+		behavior_ = behaviorRequest_;
+
+		// 振るまいごとの初期化
+		switch (behavior_) {
+
+		case Behavior::kRoot:
+		default:
+
+			// 通常行動初期化
+			BehaviorRootInitialize();
+			break;
+
+		case Behavior::kAttack:
+
+			// 攻撃行動初期化
+			BehaviorAttackInitialize();
+			break;
+		}
+
+		// 振るまいリクエストをリセット
+		behaviorRequest_ = Behavior::kUnknown;
+	}
+
+	// 現在の振るまいに応じた更新
+	switch (behavior_) {
+
+	case Behavior::kRoot:
+	default:
+
+		// 通常行動更新
+		BehaviorRootUpdate();
+		break;
+
+	case Behavior::kAttack:
+
+		// 攻撃行動更新
+		BehaviorAttackUpdate();
+		break;
+	}
+}
+
+void Player::BehaviorRootInitialize() {}
+
+void Player::BehaviorAttackInitialize() {
+
+	// 攻撃フェーズを溜めに設定
+	attackPhase_ = AttackPhase::kCharge;
+
+	// カウンター初期化
+	attackParameter_ = 0;
+
+	// 速度をゼロクリア
+	velocity_ = {};
+}
+
+void Player::BehaviorRootUpdate() {
 
 	// ①移動入力
 	InputMove();
@@ -612,7 +718,144 @@ void Player::Update() {
 		worldTransform_.rotation_.y = EaseInOut(turnFirstRotationY_, destinationRotationY, turnProgress);
 	}
 
-	// ⑧行列計算
+	// 攻撃キーを押したら
+	if (KamataEngine::Input::GetInstance()->PushKey(DIK_SPACE)) {
+
+		// 攻撃ビヘイビアをリクエスト
+		behaviorRequest_ = Behavior::kAttack;
+	}
+
+	// 行列計算
+	UpdateWorldTransform(worldTransform_);
+}
+
+void Player::BehaviorAttackUpdate() {
+
+	// 攻撃動作用の速度
+	KamataEngine::Vector3 attackVelocity = {};
+
+	// 攻撃フェーズごとの更新処理
+	switch (attackPhase_) {
+
+	// 溜め動作
+	case AttackPhase::kCharge:
+	default: {
+
+		// アニメーションの進行度
+		float t = static_cast<float>(attackParameter_) / static_cast<float>(kChargeDuration);
+		t = std::clamp(t, 0.0f, 1.0f);
+
+		// 横方向に縮める
+		worldTransform_.scale_.z = EaseOut(1.0f, 0.3f, t);
+
+		// 縦方向に伸ばす
+		worldTransform_.scale_.y = EaseOut(1.0f, 1.6f, t);
+
+		// 溜め動作終了
+		if (attackParameter_ >= kChargeDuration) {
+
+			// 突進フェーズへ移行
+			attackPhase_ = AttackPhase::kDash;
+
+			// カウンターをリセット
+			attackParameter_ = 0;
+		}
+
+		break;
+	}
+
+	// 突進動作
+	case AttackPhase::kDash: {
+
+		// アニメーションの進行度
+		float t = static_cast<float>(attackParameter_) / static_cast<float>(kDashDuration);
+		t = std::clamp(t, 0.0f, 1.0f);
+
+		// 横方向に伸ばす
+		worldTransform_.scale_.z = EaseOut(0.3f, 1.3f, t);
+
+		// 縦方向に縮める
+		worldTransform_.scale_.y = EaseIn(1.6f, 0.7f, t);
+
+		// 向いている方向へ突進する
+		if (lrDirection_ == LRDirection::kRight) {
+			attackVelocity.x = kLimitRunSpeed;
+		} else {
+			attackVelocity.x = -kLimitRunSpeed;
+		}
+
+		// 突進動作終了
+		if (attackParameter_ >= kDashDuration) {
+
+			// 余韻フェーズへ移行
+			attackPhase_ = AttackPhase::kRecovery;
+
+			// カウンターをリセット
+			attackParameter_ = 0;
+		}
+
+		break;
+	}
+
+	// 余韻動作
+	case AttackPhase::kRecovery: {
+
+		// アニメーションの進行度
+		float t = static_cast<float>(attackParameter_) / static_cast<float>(kRecoveryDuration);
+		t = std::clamp(t, 0.0f, 1.0f);
+
+		// 横方向を通常サイズに戻す
+		worldTransform_.scale_.z = EaseOut(1.3f, 1.0f, t);
+
+		// 縦方向を通常サイズに戻す
+		worldTransform_.scale_.y = EaseOut(0.7f, 1.0f, t);
+
+		// 余韻動作終了
+		if (attackParameter_ >= kRecoveryDuration) {
+
+			// 通常行動への切り替えをリクエスト
+			behaviorRequest_ = Behavior::kRoot;
+
+			// カウンターをリセット
+			attackParameter_ = 0;
+		}
+
+		break;
+	}
+	}
+
+	// トランスフォームの値をコピー
+	worldTransformAttack_.translation_ = worldTransform_.translation_;
+	worldTransformAttack_.rotation_ = worldTransform_.rotation_;
+
+	// 攻撃エフェクト用ワールド行列を更新
+	UpdateWorldTransform(worldTransformAttack_);
+
+	// 衝突情報を初期化
+	CollisionMapInfo collisionMapInfo;
+
+	// 攻撃動作用の速度を移動量に設定
+	collisionMapInfo.move = attackVelocity;
+
+	// マップ衝突判定
+	MapCollision(collisionMapInfo);
+
+	// 判定結果を反映して移動させる
+	Move(collisionMapInfo);
+
+	// 天井に接触している場合の処理
+	CeilingCollision(collisionMapInfo);
+
+	// 壁に接触している場合の処理
+	WallCollision(collisionMapInfo);
+
+	// 接地状態の切り替え処理
+	SwitchGroundState(collisionMapInfo);
+
+	// 攻撃動作の経過時間を進める
+	attackParameter_++;
+
+	// 行列計算
 	UpdateWorldTransform(worldTransform_);
 }
 
@@ -620,6 +863,11 @@ void Player::Draw() {
 
 	// 3Dモデルを描画
 	model_->Draw(worldTransform_, *camera_);
+
+	// 攻撃中は攻撃エフェクトを描画
+	if (behavior_ == Behavior::kAttack) {
+		modelAttack_->Draw(worldTransformAttack_, *camera_);
+	}
 }
 
 KamataEngine::Vector3 Player::GetWorldPosition() {
@@ -629,7 +877,9 @@ KamataEngine::Vector3 Player::GetWorldPosition() {
 
 	// ワールド行列の平行移動成分を取得
 	worldPosition.x = worldTransform_.matWorld_.m[3][0];
+
 	worldPosition.y = worldTransform_.matWorld_.m[3][1];
+
 	worldPosition.z = worldTransform_.matWorld_.m[3][2];
 
 	return worldPosition;
@@ -643,13 +893,17 @@ AABB Player::GetAABB() {
 
 	aabb.min = {
 	    worldPosition.x - kWidth / 2.0f,
+
 	    worldPosition.y - kHeight / 2.0f,
+
 	    worldPosition.z - kWidth / 2.0f,
 	};
 
 	aabb.max = {
 	    worldPosition.x + kWidth / 2.0f,
+
 	    worldPosition.y + kHeight / 2.0f,
+
 	    worldPosition.z + kWidth / 2.0f,
 	};
 

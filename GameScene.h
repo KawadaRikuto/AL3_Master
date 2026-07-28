@@ -82,6 +82,9 @@ private:
 	// 敵用3Dモデルデータ
 	KamataEngine::Model* modelEnemy_ = nullptr;
 
+	// 攻撃エフェクト用3Dモデルデータ
+	KamataEngine::Model* modelAttack_ = nullptr;
+
 	// デスパーティクル用3Dモデルデータ
 	KamataEngine::Model* modelDeathParticle_ = nullptr;
 

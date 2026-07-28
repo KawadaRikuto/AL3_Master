@@ -16,7 +16,7 @@ public:
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position);
+	void Initialize(KamataEngine::Model* model, KamataEngine::Model* modelAttack, KamataEngine::Camera* camera, const KamataEngine::Vector3& position);
 
 	/// <summary>
 	/// 更新
@@ -64,6 +64,20 @@ public:
 	bool IsDead() const { return isDead_; }
 
 private:
+	// 振るまい
+	enum class Behavior {
+		kUnknown,
+		kRoot,
+		kAttack,
+	};
+
+	// 攻撃フェーズ
+	enum class AttackPhase {
+		kCharge,   // 溜め
+		kDash,     // 突進
+		kRecovery, // 余韻
+	};
+
 	// 左右
 	enum class LRDirection {
 		kRight,
@@ -99,12 +113,38 @@ private:
 	void WallCollision(const CollisionMapInfo& info);
 	void SwitchGroundState(const CollisionMapInfo& info);
 
+	/// <summary>
+	/// 通常行動初期化
+	/// </summary>
+	void BehaviorRootInitialize();
+
+	/// <summary>
+	/// 攻撃行動初期化
+	/// </summary>
+	void BehaviorAttackInitialize();
+
+	/// <summary>
+	/// 通常行動更新
+	/// </summary>
+	void BehaviorRootUpdate();
+
+	/// <summary>
+	/// 攻撃行動更新
+	/// </summary>
+	void BehaviorAttackUpdate();
+
 	KamataEngine::Vector3 CornerPosition(const KamataEngine::Vector3& center, Corner corner);
 
 private:
 	KamataEngine::WorldTransform worldTransform_;
 
+	// 攻撃エフェクト用ワールドトランスフォーム
+	KamataEngine::WorldTransform worldTransformAttack_;
+
 	KamataEngine::Model* model_ = nullptr;
+
+	// 攻撃エフェクト用モデル
+	KamataEngine::Model* modelAttack_ = nullptr;
 
 	KamataEngine::Camera* camera_ = nullptr;
 
@@ -137,4 +177,25 @@ private:
 
 	// デスフラグ
 	bool isDead_ = false;
+
+	// 現在の振るまい
+	Behavior behavior_ = Behavior::kRoot;
+
+	// 次の振るまいリクエスト
+	Behavior behaviorRequest_ = Behavior::kUnknown;
+
+	// 現在の攻撃フェーズ
+	AttackPhase attackPhase_ = AttackPhase::kCharge;
+
+	// 攻撃ギミックの経過時間カウンター
+	uint32_t attackParameter_ = 0;
+
+	// 溜め動作時間
+	static inline const uint32_t kChargeDuration = 20;
+
+	// 突進動作時間
+	static inline const uint32_t kDashDuration = 10;
+
+	// 余韻動作時間
+	static inline const uint32_t kRecoveryDuration = 15;
 };

@@ -143,6 +143,9 @@ void GameScene::Initialize() {
 
 	modelEnemy_ = KamataEngine::Model::CreateFromOBJ("enemy", true);
 
+	// 攻撃エフェクト用3Dモデルデータの生成
+	modelAttack_ = KamataEngine::Model::CreateFromOBJ("hit_effect", true);
+
 	modelDeathParticle_ = KamataEngine::Model::CreateFromOBJ("deathParticle", true);
 
 	camera_.farZ = 1000.0f;
@@ -154,9 +157,9 @@ void GameScene::Initialize() {
 
 	player_ = new Player();
 
-	KamataEngine::Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(10, 16);
+	KamataEngine::Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(3, 16);
 
-	player_->Initialize(model_, &camera_, playerPosition);
+	player_->Initialize(model_, modelAttack_, &camera_, playerPosition);
 
 	player_->SetMapChipField(mapChipField_);
 
@@ -523,6 +526,7 @@ GameScene::~GameScene() {
 	delete cameraController_;
 	delete debugCamera_;
 	delete modelEnemy_;
+	delete modelAttack_;
 	delete modelDeathParticle_;
 	delete player_;
 	delete model_;
