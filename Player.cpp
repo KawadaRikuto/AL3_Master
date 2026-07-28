@@ -914,6 +914,11 @@ void Player::OnCollision(const Enemy* enemy) {
 
 	(void)enemy;
 
+	// 攻撃中はダメージ無効
+	if (IsAttack()) {
+		return;
+	}
+
 	// デスフラグを立てる
 	isDead_ = true;
 }

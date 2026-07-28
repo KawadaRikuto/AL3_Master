@@ -63,6 +63,11 @@ public:
 	/// </summary>
 	bool IsDead() const { return isDead_; }
 
+	/// <summary>
+	/// 攻撃中かどうか
+	/// </summary>
+	bool IsAttack() const { return behavior_ == Behavior::kAttack; }
+
 private:
 	// 振るまい
 	enum class Behavior {

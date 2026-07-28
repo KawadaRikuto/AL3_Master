@@ -36,13 +36,85 @@ void Enemy::Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera,
 	worldTransform_.rotation_.y = std::numbers::pi_v<float> * 3.0f / 2.0f;
 
 	// 速度を設定する
-	velocity_ = {-kWalkSpeed, 0.0f, 0.0f};
+	velocity_ = {
+	    -kWalkSpeed,
+	    0.0f,
+	    0.0f,
+	};
 
 	// 経過時間を初期化
 	walkTimer_ = 0.0f;
+	deathTimer_ = 0.0f;
+
+	// 振るまいを初期化
+	behavior_ = Behavior::kRoot;
+	behaviorRequest_ = Behavior::kUnknown;
+
+	// デスフラグを初期化
+	isDead_ = false;
+
+	// コリジョン無効フラグを初期化
+	isCollisionDisabled_ = false;
 }
 
 void Enemy::Update() {
+
+	// 振るまい変更リクエストがある
+	if (behaviorRequest_ != Behavior::kUnknown) {
+
+		// 振るまいを変更
+		behavior_ = behaviorRequest_;
+
+		// 振るまいごとの初期化
+		switch (behavior_) {
+
+		case Behavior::kRoot:
+		default:
+			BehaviorRootInitialize();
+			break;
+
+		case Behavior::kDeath:
+			BehaviorDeathInitialize();
+			break;
+		}
+
+		// 振るまい変更リクエストをリセット
+		behaviorRequest_ = Behavior::kUnknown;
+	}
+
+	// 現在の振るまいに応じた更新
+	switch (behavior_) {
+
+	case Behavior::kRoot:
+	default:
+		BehaviorRootUpdate();
+		break;
+
+	case Behavior::kDeath:
+		BehaviorDeathUpdate();
+		break;
+	}
+}
+
+void Enemy::BehaviorRootInitialize() {
+
+	// コリジョンを有効にする
+	isCollisionDisabled_ = false;
+}
+
+void Enemy::BehaviorDeathInitialize() {
+
+	// デス演出の経過時間を初期化
+	deathTimer_ = 0.0f;
+
+	// 移動を停止
+	velocity_ = {};
+
+	// コリジョン無効フラグを立てる
+	isCollisionDisabled_ = true;
+}
+
+void Enemy::BehaviorRootUpdate() {
 
 	// 移動
 	worldTransform_.translation_.x += velocity_.x;
@@ -68,6 +140,28 @@ void Enemy::Update() {
 	UpdateWorldTransform(worldTransform_);
 }
 
+void Enemy::BehaviorDeathUpdate() {
+
+	// デス演出のタイマーを加算
+	deathTimer_ += 1.0f / 60.0f;
+
+	// Y軸まわりを高速回転
+	worldTransform_.rotation_.y += 0.5f;
+
+	// X軸まわりをゆっくり回転
+	worldTransform_.rotation_.x += 0.05f;
+
+	// デス演出時間に達した
+	if (deathTimer_ >= kDeathMotionTime) {
+
+		// デスフラグを立てる
+		isDead_ = true;
+	}
+
+	// ワールド行列の更新
+	UpdateWorldTransform(worldTransform_);
+}
+
 void Enemy::Draw() {
 
 	// 3Dモデルを描画
@@ -81,7 +175,9 @@ KamataEngine::Vector3 Enemy::GetWorldPosition() {
 
 	// ワールド行列の平行移動成分を取得
 	worldPosition.x = worldTransform_.matWorld_.m[3][0];
+
 	worldPosition.y = worldTransform_.matWorld_.m[3][1];
+
 	worldPosition.z = worldTransform_.matWorld_.m[3][2];
 
 	return worldPosition;
@@ -108,4 +204,17 @@ AABB Enemy::GetAABB() {
 	return aabb;
 }
 
-void Enemy::OnCollision(const Player* player) { (void)player; }
+void Enemy::OnCollision(const Player* player) {
+
+	// デス演出中に再び衝突した場合は何もしない
+	if (behavior_ == Behavior::kDeath) {
+		return;
+	}
+
+	// プレイヤーが攻撃中なら敵が死亡
+	if (player->IsAttack()) {
+
+		// デス演出への変更をリクエスト
+		behaviorRequest_ = Behavior::kDeath;
+	}
+}

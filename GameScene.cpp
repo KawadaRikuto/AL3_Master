@@ -359,7 +359,19 @@ void GameScene::UpdatePlayPhase() {
 		camera_.TransferMatrix();
 	}
 
+	// 全ての当たり判定
 	CheckAllCollisions();
+
+	// デスフラグの立った敵を削除
+	enemies_.remove_if([](Enemy* enemy) {
+		if (enemy->IsDead()) {
+
+			delete enemy;
+			return true;
+		}
+
+		return false;
+	});
 }
 
 void GameScene::UpdateDeathPhase() {
@@ -448,12 +460,16 @@ void GameScene::CheckAllCollisions() {
 			continue;
 		}
 
+		// コリジョン無効の敵はスキップ
+		if (enemy->IsCollisionDisabled()) {
+			continue;
+		}
+
 		aabb2 = enemy->GetAABB();
 
 		if (IsCollision(aabb1, aabb2)) {
 
 			player_->OnCollision(enemy);
-
 			enemy->OnCollision(player_);
 		}
 	}
