@@ -2,9 +2,9 @@
 
 #include "Player.h"
 
+#include "Enemy.h"
 #include "MapChipField.h"
 #include "WorldTransformUpdate.h"
-#include "Enemy.h"
 
 #include <algorithm>
 #include <array>
@@ -660,6 +660,6 @@ void Player::OnCollision(const Enemy* enemy) {
 
 	(void)enemy;
 
-	// ジャンプ開始
-	velocity_.y += 0.5f;
+	// デスフラグを立てる
+	isDead_ = true;
 }

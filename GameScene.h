@@ -18,11 +18,23 @@
 class GameScene {
 
 public:
+	// ゲームの現在フェーズ
+	enum class Phase {
+		kPlay,
+		kDeath,
+	};
+
+public:
 	~GameScene();
 
 	void Initialize();
 	void Update();
 	void Draw();
+
+	/// <summary>
+	/// 終了フラグのgetter
+	/// </summary>
+	bool IsFinished() const { return finished_; }
 
 private:
 	/// <summary>
@@ -35,7 +47,25 @@ private:
 	/// </summary>
 	void CheckAllCollisions();
 
+	/// <summary>
+	/// ゲームプレイフェーズの更新
+	/// </summary>
+	void UpdatePlayPhase();
+
+	/// <summary>
+	/// デス演出フェーズの更新
+	/// </summary>
+	void UpdateDeathPhase();
+
+	/// <summary>
+	/// フェーズの切り替え
+	/// </summary>
+	void ChangePhase();
+
 private:
+	// ゲームの現在フェーズ
+	Phase phase_ = Phase::kPlay;
+
 	// 自キャラ用3Dモデルデータ
 	KamataEngine::Model* model_ = nullptr;
 
@@ -80,4 +110,8 @@ private:
 
 	// ブロック用ワールドトランスフォーム
 	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
+
+	// 終了フラグ
+	bool finished_ = false;
+
 };

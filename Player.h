@@ -58,6 +58,10 @@ public:
 	/// </summary>
 	void OnCollision(const Enemy* enemy);
 
+	/// <summary>
+	/// デスフラグのgetter
+	/// </summary>
+	bool IsDead() const { return isDead_; }
 
 private:
 	// 左右
@@ -130,4 +134,7 @@ private:
 	static inline const float kGravityAcceleration = 0.05f;
 	static inline const float kLimitFallSpeed = 0.5f;
 	static inline const float kJumpAcceleration = 1.0f;
+
+	// デスフラグ
+	bool isDead_ = false;
 };
