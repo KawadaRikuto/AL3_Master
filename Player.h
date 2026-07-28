@@ -46,7 +46,7 @@ public:
 	/// <summary>
 	/// ワールド座標を取得
 	/// </summary>
-	KamataEngine::Vector3 GetWorldPosition();
+	KamataEngine::Vector3 GetWorldPosition() const;
 
 	/// <summary>
 	/// AABBを取得

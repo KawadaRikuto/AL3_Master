@@ -1,5 +1,6 @@
 #include "Enemy.h"
 
+#include "GameScene.h"
 #include "Player.h"
 #include "WorldTransformUpdate.h"
 
@@ -216,5 +217,21 @@ void Enemy::OnCollision(const Player* player) {
 
 		// デス演出への変更をリクエスト
 		behaviorRequest_ = Behavior::kDeath;
+
+		// 敵のワールド座標を取得
+		KamataEngine::Vector3 enemyPosition = GetWorldPosition();
+
+		// 自キャラのワールド座標を取得
+		KamataEngine::Vector3 playerPosition = player->GetWorldPosition();
+
+		// 敵と自キャラの中間座標を計算
+		KamataEngine::Vector3 effectPosition = {
+		    (enemyPosition.x + playerPosition.x) / 2.0f,
+		    (enemyPosition.y + playerPosition.y) / 2.0f,
+		    (enemyPosition.z + playerPosition.z) / 2.0f,
+		};
+
+		// ヒットエフェクトを生成
+		gameScene_->CreateHitEffect(effectPosition);
 	}
 }

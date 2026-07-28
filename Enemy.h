@@ -5,6 +5,7 @@
 
 // 前方宣言
 class Player;
+class GameScene;
 
 /// <summary>
 /// 敵
@@ -51,6 +52,11 @@ public:
 	/// コリジョン無効フラグのgetter
 	/// </summary>
 	bool IsCollisionDisabled() const { return isCollisionDisabled_; }
+
+	/// <summary>
+	/// ゲームシーンを設定
+	/// </summary>
+	void SetGameScene(GameScene* gameScene) { gameScene_ = gameScene; }
 
 private:
 	// 振るまい
@@ -129,4 +135,7 @@ private:
 
 	// コリジョン無効フラグ
 	bool isCollisionDisabled_ = false;
+
+	// ゲームシーン
+	GameScene* gameScene_ = nullptr;
 };

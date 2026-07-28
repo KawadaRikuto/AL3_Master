@@ -3,11 +3,12 @@
 #include "CameraController.h"
 #include "DeathParticles.h"
 #include "Enemy.h"
+#include "Fade.h"
+#include "HitEffect.h"
 #include "KamataEngine.h"
 #include "MapChipField.h"
 #include "Player.h"
 #include "Skydome.h"
-#include "Fade.h"
 #include "WorldTransformUpdate.h"
 
 #include <3d/DebugCamera.h>
@@ -15,11 +16,12 @@
 #include <list>
 #include <vector>
 
-// ゲームシーン
+/// <summary>
+/// ゲームシーン
+/// </summary>
 class GameScene {
 
 public:
-
 	// シーンのフェーズ
 	enum class Phase {
 		kFadeIn,  // フェードイン
@@ -29,16 +31,35 @@ public:
 	};
 
 public:
+	/// <summary>
+	/// デストラクタ
+	/// </summary>
 	~GameScene();
 
+	/// <summary>
+	/// 初期化
+	/// </summary>
 	void Initialize();
+
+	/// <summary>
+	/// 更新
+	/// </summary>
 	void Update();
+
+	/// <summary>
+	/// 描画
+	/// </summary>
 	void Draw();
 
 	/// <summary>
 	/// 終了フラグのgetter
 	/// </summary>
 	bool IsFinished() const { return finished_; }
+
+	/// <summary>
+	/// ヒットエフェクトを生成
+	/// </summary>
+	void CreateHitEffect(const KamataEngine::Vector3& position);
 
 private:
 	/// <summary>
@@ -85,6 +106,9 @@ private:
 	// 攻撃エフェクト用3Dモデルデータ
 	KamataEngine::Model* modelAttack_ = nullptr;
 
+	// ヒットエフェクト用3Dモデルデータ
+	KamataEngine::Model* modelHitEffect_ = nullptr;
+
 	// デスパーティクル用3Dモデルデータ
 	KamataEngine::Model* modelDeathParticle_ = nullptr;
 
@@ -106,6 +130,9 @@ private:
 	// 敵
 	std::list<Enemy*> enemies_;
 
+	// ヒットエフェクト
+	std::list<HitEffect*> hitEffects_;
+
 	// デスパーティクル
 	DeathParticles* deathParticles_ = nullptr;
 
@@ -126,5 +153,4 @@ private:
 
 	// フェード時間
 	static inline const float kFadeDuration = 1.0f;
-
 };

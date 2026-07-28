@@ -146,10 +146,23 @@ void GameScene::Initialize() {
 	// 攻撃エフェクト用3Dモデルデータの生成
 	modelAttack_ = KamataEngine::Model::CreateFromOBJ("hit_effect", true);
 
+	// ヒットエフェクト用3Dモデルデータの生成
+	modelHitEffect_ = KamataEngine::Model::CreateFromOBJ("HitEffect", true);
+
 	modelDeathParticle_ = KamataEngine::Model::CreateFromOBJ("deathParticle", true);
 
 	camera_.farZ = 1000.0f;
 	camera_.Initialize();
+
+	// ヒットエフェクト用3Dモデルデータの生成
+	modelHitEffect_ = KamataEngine::Model::CreateFromOBJ("HitEffect", true);
+
+
+
+	// ヒットエフェクトで使用するモデルとカメラを設定
+	HitEffect::SetModel(modelHitEffect_);
+	HitEffect::SetCamera(&camera_);
+
 
 	debugCamera_ = new KamataEngine::DebugCamera(KamataEngine::WinApp::kWindowWidth, KamataEngine::WinApp::kWindowHeight);
 
@@ -172,6 +185,9 @@ void GameScene::Initialize() {
 		KamataEngine::Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(10 + i * 5, 18);
 
 		newEnemy->Initialize(modelEnemy_, &camera_, enemyPosition);
+
+		// ゲームシーンを設定
+		newEnemy->SetGameScene(this);
 
 		enemies_.push_back(newEnemy);
 	}
@@ -219,6 +235,15 @@ void GameScene::Initialize() {
 
 	// 終了フラグを初期化
 	finished_ = false;
+}
+
+void GameScene::CreateHitEffect(const KamataEngine::Vector3& position) {
+
+	// ヒットエフェクトを生成
+	HitEffect* newHitEffect = HitEffect::Create(position);
+
+	// リストへ追加
+	hitEffects_.push_back(newHitEffect);
 }
 
 void GameScene::GenerateBlocks() {
@@ -325,6 +350,29 @@ void GameScene::UpdatePlayPhase() {
 			enemy->Update();
 		}
 	}
+
+	// ヒットエフェクトの更新
+	for (HitEffect* hitEffect : hitEffects_) {
+
+		if (hitEffect) {
+			hitEffect->Update();
+		}
+	}
+
+	// デス状態になったヒットエフェクトを削除
+	hitEffects_.remove_if([](HitEffect* hitEffect) {
+		if (hitEffect == nullptr) {
+			return true;
+		}
+
+		if (hitEffect->IsDead()) {
+
+			delete hitEffect;
+			return true;
+		}
+
+		return false;
+	});
 
 	for (std::vector<KamataEngine::WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
 
@@ -496,6 +544,14 @@ void GameScene::Draw() {
 		}
 	}
 
+	// ヒットエフェクトの描画
+	for (HitEffect* hitEffect : hitEffects_) {
+
+		if (hitEffect) {
+			hitEffect->Draw();
+		}
+	}
+
 	if (deathParticles_) {
 		deathParticles_->Draw();
 	}
@@ -534,6 +590,13 @@ GameScene::~GameScene() {
 
 	enemies_.clear();
 
+	// ヒットエフェクトの解放
+	for (HitEffect* hitEffect : hitEffects_) {
+		delete hitEffect;
+	}
+
+	hitEffects_.clear();
+
 	delete deathParticles_;
 
 	delete mapChipField_;
@@ -543,6 +606,7 @@ GameScene::~GameScene() {
 	delete debugCamera_;
 	delete modelEnemy_;
 	delete modelAttack_;
+	delete modelHitEffect_;
 	delete modelDeathParticle_;
 	delete player_;
 	delete model_;

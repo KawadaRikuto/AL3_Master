@@ -870,20 +870,6 @@ void Player::Draw() {
 	}
 }
 
-KamataEngine::Vector3 Player::GetWorldPosition() {
-
-	// ワールド座標を入れる変数
-	KamataEngine::Vector3 worldPosition;
-
-	// ワールド行列の平行移動成分を取得
-	worldPosition.x = worldTransform_.matWorld_.m[3][0];
-
-	worldPosition.y = worldTransform_.matWorld_.m[3][1];
-
-	worldPosition.z = worldTransform_.matWorld_.m[3][2];
-
-	return worldPosition;
-}
 
 AABB Player::GetAABB() {
 
@@ -921,4 +907,15 @@ void Player::OnCollision(const Enemy* enemy) {
 
 	// デスフラグを立てる
 	isDead_ = true;
+}
+
+KamataEngine::Vector3 Player::GetWorldPosition() const {
+
+	KamataEngine::Vector3 worldPosition;
+
+	worldPosition.x = worldTransform_.matWorld_.m[3][0];
+	worldPosition.y = worldTransform_.matWorld_.m[3][1];
+	worldPosition.z = worldTransform_.matWorld_.m[3][2];
+
+	return worldPosition;
 }
