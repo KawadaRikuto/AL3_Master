@@ -7,6 +7,7 @@
 #include "MapChipField.h"
 #include "Player.h"
 #include "Skydome.h"
+#include "Fade.h"
 #include "WorldTransformUpdate.h"
 
 #include <3d/DebugCamera.h>
@@ -18,10 +19,13 @@
 class GameScene {
 
 public:
-	// ゲームの現在フェーズ
+
+	// シーンのフェーズ
 	enum class Phase {
-		kPlay,
-		kDeath,
+		kFadeIn,  // フェードイン
+		kPlay,    // ゲームプレイ
+		kDeath,   // デス演出
+		kFadeOut, // フェードアウト
 	};
 
 public:
@@ -111,7 +115,13 @@ private:
 	// ブロック用ワールドトランスフォーム
 	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
 
+	// フェード
+	Fade* fade_ = nullptr;
+
 	// 終了フラグ
 	bool finished_ = false;
+
+	// フェード時間
+	static inline const float kFadeDuration = 1.0f;
 
 };
