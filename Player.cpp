@@ -607,6 +607,16 @@ void Player::SwitchGroundState(const CollisionMapInfo& info) {
 
 void Player::Update() {
 
+	// 外部からのノックバックリクエストを処理
+	if (knockbackRequest_) {
+
+		// ノックバック行動への切り替えをリクエスト
+		behaviorRequest_ = Behavior::kKnockback;
+
+		// ノックバックリクエストフラグをリセット
+		knockbackRequest_ = false;
+	}
+
 	// 振るまい変更リクエストがある
 	if (behaviorRequest_ != Behavior::kUnknown) {
 
@@ -627,6 +637,12 @@ void Player::Update() {
 
 			// 攻撃行動初期化
 			BehaviorAttackInitialize();
+			break;
+
+		case Behavior::kKnockback:
+
+			// ノックバック行動初期化
+			BehaviorKnockbackInitialize();
 			break;
 		}
 
@@ -649,10 +665,50 @@ void Player::Update() {
 		// 攻撃行動更新
 		BehaviorAttackUpdate();
 		break;
+
+	case Behavior::kKnockback:
+
+		// ノックバック行動更新
+		BehaviorKnockbackUpdate();
+		break;
 	}
 }
 
 void Player::BehaviorRootInitialize() {}
+
+void Player::BehaviorKnockbackInitialize() {
+
+	// ノックバックフェーズを移動に設定
+	knockbackPhase_ = KnockbackPhase::kMove;
+
+	// カウンターを初期化
+	knockbackParameter_ = 0;
+
+	// 攻撃中の変形を通常状態へ戻す
+	worldTransform_.scale_ = {
+	    1.0f,
+	    1.0f,
+	    1.0f,
+	};
+
+	// 向いている方向とは反対側へ吹き飛ばす
+	if (lrDirection_ == LRDirection::kRight) {
+
+		velocity_ = {
+		    -kKnockbackSpeed,
+		    kKnockbackJumpSpeed,
+		    0.0f,
+		};
+
+	} else {
+
+		velocity_ = {
+		    kKnockbackSpeed,
+		    kKnockbackJumpSpeed,
+		    0.0f,
+		};
+	}
+}
 
 void Player::BehaviorAttackInitialize() {
 
@@ -859,6 +915,112 @@ void Player::BehaviorAttackUpdate() {
 	UpdateWorldTransform(worldTransform_);
 }
 
+void Player::BehaviorKnockbackUpdate() {
+
+	// ノックバック用の移動量
+	KamataEngine::Vector3 knockbackMove = velocity_;
+
+	switch (knockbackPhase_) {
+
+	case KnockbackPhase::kMove:
+	default: {
+
+		// アニメーションの進行度
+		float t = static_cast<float>(knockbackParameter_) / static_cast<float>(kKnockbackMoveDuration);
+
+		t = std::clamp(t, 0.0f, 1.0f);
+
+		// 吹き飛び中に体を倒す
+		const float knockbackRotation = lrDirection_ == LRDirection::kRight ? -0.8f : 0.8f;
+
+		worldTransform_.rotation_.z = EaseOut(0.0f, knockbackRotation, t);
+
+		// 重力を加える
+		velocity_.y -= kGravityAcceleration;
+		velocity_.y = std::max(velocity_.y, -kLimitFallSpeed);
+
+		knockbackMove = velocity_;
+
+		// 移動フェーズ終了
+		if (knockbackParameter_ >= kKnockbackMoveDuration) {
+
+			knockbackPhase_ = KnockbackPhase::kRecovery;
+
+			knockbackParameter_ = 0;
+
+			// 横方向の移動を停止
+			velocity_.x = 0.0f;
+		}
+
+		break;
+	}
+
+	case KnockbackPhase::kRecovery: {
+
+		// アニメーションの進行度
+		float t = static_cast<float>(knockbackParameter_) / static_cast<float>(kKnockbackRecoveryDuration);
+
+		t = std::clamp(t, 0.0f, 1.0f);
+
+		const float knockbackRotation = lrDirection_ == LRDirection::kRight ? -0.8f : 0.8f;
+
+		// 倒れた体勢から立て直す
+		worldTransform_.rotation_.z = EaseOut(knockbackRotation, 0.0f, t);
+
+		// 空中なら落下を続ける
+		if (!onGround_) {
+
+			velocity_.y -= kGravityAcceleration;
+
+			velocity_.y = std::max(velocity_.y, -kLimitFallSpeed);
+		}
+
+		knockbackMove = velocity_;
+
+		// 立て直し終了
+		if (knockbackParameter_ >= kKnockbackRecoveryDuration) {
+
+			worldTransform_.rotation_.z = 0.0f;
+
+			velocity_ = {};
+
+			behaviorRequest_ = Behavior::kRoot;
+
+			knockbackParameter_ = 0;
+		}
+
+		break;
+	}
+	}
+
+	// 衝突情報を初期化
+	CollisionMapInfo collisionMapInfo;
+
+	// ノックバック移動量を設定
+	collisionMapInfo.move = knockbackMove;
+
+	// マップ衝突判定
+	MapCollision(collisionMapInfo);
+
+	// 判定結果を反映して移動
+	Move(collisionMapInfo);
+
+	// 天井との衝突処理
+	CeilingCollision(collisionMapInfo);
+
+	// 壁との衝突処理
+	WallCollision(collisionMapInfo);
+
+	// 接地状態の切り替え
+	SwitchGroundState(collisionMapInfo);
+
+	// カウンターを進める
+	++knockbackParameter_;
+
+	// 行列計算
+	UpdateWorldTransform(worldTransform_);
+}
+
 void Player::Draw() {
 
 	// 3Dモデルを描画
@@ -869,7 +1031,6 @@ void Player::Draw() {
 		modelAttack_->Draw(worldTransformAttack_, *camera_);
 	}
 }
-
 
 AABB Player::GetAABB() {
 
@@ -919,3 +1080,5 @@ KamataEngine::Vector3 Player::GetWorldPosition() const {
 
 	return worldPosition;
 }
+
+bool Player::IsFacingRight() const { return lrDirection_ == LRDirection::kRight; }

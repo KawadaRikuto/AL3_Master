@@ -143,11 +143,17 @@ void GameScene::Initialize() {
 
 	modelEnemy_ = KamataEngine::Model::CreateFromOBJ("enemy", true);
 
+	// 盾持ち敵用3Dモデルデータの生成
+	modelShieldEnemy_ = KamataEngine::Model::CreateFromOBJ("shieldEnemy", true);
+
 	// 攻撃エフェクト用3Dモデルデータの生成
 	modelAttack_ = KamataEngine::Model::CreateFromOBJ("hit_effect", true);
 
 	// ヒットエフェクト用3Dモデルデータの生成
 	modelHitEffect_ = KamataEngine::Model::CreateFromOBJ("HitEffect", true);
+
+	// ガードエフェクト用3Dモデルデータの生成
+	modelGuardEffect_ = KamataEngine::Model::CreateFromOBJ("ring", true);
 
 	modelDeathParticle_ = KamataEngine::Model::CreateFromOBJ("deathParticle", true);
 
@@ -157,12 +163,13 @@ void GameScene::Initialize() {
 	// ヒットエフェクト用3Dモデルデータの生成
 	modelHitEffect_ = KamataEngine::Model::CreateFromOBJ("HitEffect", true);
 
-
-
 	// ヒットエフェクトで使用するモデルとカメラを設定
 	HitEffect::SetModel(modelHitEffect_);
 	HitEffect::SetCamera(&camera_);
 
+	// ガードエフェクトで使用するモデルとカメラを設定
+	GuardEffect::SetModel(modelGuardEffect_);
+	GuardEffect::SetCamera(&camera_);
 
 	debugCamera_ = new KamataEngine::DebugCamera(KamataEngine::WinApp::kWindowWidth, KamataEngine::WinApp::kWindowHeight);
 
@@ -190,6 +197,22 @@ void GameScene::Initialize() {
 		newEnemy->SetGameScene(this);
 
 		enemies_.push_back(newEnemy);
+	}
+
+	const int32_t kNumShieldEnemies = 3;
+
+	for (int32_t i = 0; i < kNumShieldEnemies; ++i) {
+
+		ShieldEnemy* newShieldEnemy = new ShieldEnemy();
+
+		KamataEngine::Vector3 shieldEnemyPosition = mapChipField_->GetMapChipPositionByIndex(25 + i * 5, 18);
+
+		newShieldEnemy->Initialize(modelShieldEnemy_, &camera_, shieldEnemyPosition);
+
+		// ゲームシーンを設定
+		newShieldEnemy->SetGameScene(this);
+
+		shieldEnemies_.push_back(newShieldEnemy);
 	}
 
 	cameraController_ = new CameraController();
@@ -244,6 +267,15 @@ void GameScene::CreateHitEffect(const KamataEngine::Vector3& position) {
 
 	// リストへ追加
 	hitEffects_.push_back(newHitEffect);
+}
+
+void GameScene::CreateGuardEffect(const KamataEngine::Vector3& position) {
+
+	// ガードエフェクトを生成
+	GuardEffect* newGuardEffect = GuardEffect::Create(position);
+
+	// リストへ追加
+	guardEffects_.push_back(newGuardEffect);
 }
 
 void GameScene::GenerateBlocks() {
@@ -351,6 +383,13 @@ void GameScene::UpdatePlayPhase() {
 		}
 	}
 
+	for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+
+		if (shieldEnemy) {
+			shieldEnemy->Update();
+		}
+	}
+
 	// ヒットエフェクトの更新
 	for (HitEffect* hitEffect : hitEffects_) {
 
@@ -359,15 +398,23 @@ void GameScene::UpdatePlayPhase() {
 		}
 	}
 
-	// デス状態になったヒットエフェクトを削除
-	hitEffects_.remove_if([](HitEffect* hitEffect) {
-		if (hitEffect == nullptr) {
+	// ガードエフェクトの更新
+	for (GuardEffect* guardEffect : guardEffects_) {
+
+		if (guardEffect) {
+			guardEffect->Update();
+		}
+	}
+
+	// デス状態になったガードエフェクトを削除
+	guardEffects_.remove_if([](GuardEffect* guardEffect) {
+		if (guardEffect == nullptr) {
 			return true;
 		}
 
-		if (hitEffect->IsDead()) {
+		if (guardEffect->IsDead()) {
 
-			delete hitEffect;
+			delete guardEffect;
 			return true;
 		}
 
@@ -420,6 +467,17 @@ void GameScene::UpdatePlayPhase() {
 
 		return false;
 	});
+
+	// デスフラグの立った盾持ち敵を削除
+	shieldEnemies_.remove_if([](ShieldEnemy* shieldEnemy) {
+		if (shieldEnemy->IsDead()) {
+
+			delete shieldEnemy;
+			return true;
+		}
+
+		return false;
+	});
 }
 
 void GameScene::UpdateDeathPhase() {
@@ -432,6 +490,13 @@ void GameScene::UpdateDeathPhase() {
 
 		if (enemy) {
 			enemy->Update();
+		}
+	}
+
+	for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+
+		if (shieldEnemy) {
+			shieldEnemy->Update();
 		}
 	}
 
@@ -521,6 +586,26 @@ void GameScene::CheckAllCollisions() {
 			enemy->OnCollision(player_);
 		}
 	}
+
+	for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+
+		if (!shieldEnemy) {
+			continue;
+		}
+
+		// コリジョン無効の盾持ち敵はスキップ
+		if (shieldEnemy->IsCollisionDisabled()) {
+			continue;
+		}
+
+		aabb2 = shieldEnemy->GetAABB();
+
+		if (IsCollision(aabb1, aabb2)) {
+
+			player_->OnCollision(static_cast<const Enemy*>(nullptr));
+			shieldEnemy->OnCollision(player_);
+		}
+	}
 }
 
 void GameScene::Draw() {
@@ -544,11 +629,26 @@ void GameScene::Draw() {
 		}
 	}
 
+	for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+
+		if (shieldEnemy) {
+			shieldEnemy->Draw();
+		}
+	}
+
 	// ヒットエフェクトの描画
 	for (HitEffect* hitEffect : hitEffects_) {
 
 		if (hitEffect) {
 			hitEffect->Draw();
+		}
+	}
+
+	// ガードエフェクトの描画
+	for (GuardEffect* guardEffect : guardEffects_) {
+
+		if (guardEffect) {
+			guardEffect->Draw();
 		}
 	}
 
@@ -590,12 +690,25 @@ GameScene::~GameScene() {
 
 	enemies_.clear();
 
+	for (ShieldEnemy* shieldEnemy : shieldEnemies_) {
+		delete shieldEnemy;
+	}
+
+	shieldEnemies_.clear();
+
 	// ヒットエフェクトの解放
 	for (HitEffect* hitEffect : hitEffects_) {
 		delete hitEffect;
 	}
 
 	hitEffects_.clear();
+
+	// ガードエフェクトの解放
+	for (GuardEffect* guardEffect : guardEffects_) {
+		delete guardEffect;
+	}
+
+	guardEffects_.clear();
 
 	delete deathParticles_;
 
@@ -605,8 +718,10 @@ GameScene::~GameScene() {
 	delete cameraController_;
 	delete debugCamera_;
 	delete modelEnemy_;
+	delete modelShieldEnemy_;
 	delete modelAttack_;
 	delete modelHitEffect_;
+	delete modelGuardEffect_;
 	delete modelDeathParticle_;
 	delete player_;
 	delete model_;

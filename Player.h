@@ -59,6 +59,11 @@ public:
 	void OnCollision(const Enemy* enemy);
 
 	/// <summary>
+	/// ノックバックをリクエスト
+	/// </summary>
+	void RequestKnockback() { knockbackRequest_ = true; }
+
+	/// <summary>
 	/// デスフラグのgetter
 	/// </summary>
 	bool IsDead() const { return isDead_; }
@@ -68,19 +73,31 @@ public:
 	/// </summary>
 	bool IsAttack() const { return behavior_ == Behavior::kAttack; }
 
+	/// <summary>
+	/// 右を向いているか取得
+	/// </summary>
+	bool IsFacingRight() const;
+
 private:
 	// 振るまい
 	enum class Behavior {
 		kUnknown,
 		kRoot,
 		kAttack,
+		kKnockback,
 	};
 
 	// 攻撃フェーズ
 	enum class AttackPhase {
-		kCharge,   // 溜め
-		kDash,     // 突進
-		kRecovery, // 余韻
+		kCharge,
+		kDash,
+		kRecovery,
+	};
+
+	// ノックバックフェーズ
+	enum class KnockbackPhase {
+		kMove,
+		kRecovery,
 	};
 
 	// 左右
@@ -89,17 +106,14 @@ private:
 		kLeft,
 	};
 
-	// 角
 	enum Corner {
 		kRightBottom,
 		kLeftBottom,
 		kRightTop,
 		kLeftTop,
-
 		kNumCorner,
 	};
 
-	// マップとの当たり判定情報
 	struct CollisionMapInfo {
 		bool ceiling = false;
 		bool landing = false;
@@ -118,41 +132,23 @@ private:
 	void WallCollision(const CollisionMapInfo& info);
 	void SwitchGroundState(const CollisionMapInfo& info);
 
-	/// <summary>
-	/// 通常行動初期化
-	/// </summary>
 	void BehaviorRootInitialize();
-
-	/// <summary>
-	/// 攻撃行動初期化
-	/// </summary>
 	void BehaviorAttackInitialize();
+	void BehaviorKnockbackInitialize();
 
-	/// <summary>
-	/// 通常行動更新
-	/// </summary>
 	void BehaviorRootUpdate();
-
-	/// <summary>
-	/// 攻撃行動更新
-	/// </summary>
 	void BehaviorAttackUpdate();
+	void BehaviorKnockbackUpdate();
 
 	KamataEngine::Vector3 CornerPosition(const KamataEngine::Vector3& center, Corner corner);
 
 private:
 	KamataEngine::WorldTransform worldTransform_;
-
-	// 攻撃エフェクト用ワールドトランスフォーム
 	KamataEngine::WorldTransform worldTransformAttack_;
 
 	KamataEngine::Model* model_ = nullptr;
-
-	// 攻撃エフェクト用モデル
 	KamataEngine::Model* modelAttack_ = nullptr;
-
 	KamataEngine::Camera* camera_ = nullptr;
-
 	MapChipField* mapChipField_ = nullptr;
 
 	KamataEngine::Vector3 velocity_ = {};
@@ -180,27 +176,36 @@ private:
 	static inline const float kLimitFallSpeed = 0.5f;
 	static inline const float kJumpAcceleration = 1.0f;
 
-	// デスフラグ
 	bool isDead_ = false;
 
-	// 現在の振るまい
 	Behavior behavior_ = Behavior::kRoot;
-
-	// 次の振るまいリクエスト
 	Behavior behaviorRequest_ = Behavior::kUnknown;
 
-	// 現在の攻撃フェーズ
 	AttackPhase attackPhase_ = AttackPhase::kCharge;
-
-	// 攻撃ギミックの経過時間カウンター
 	uint32_t attackParameter_ = 0;
 
-	// 溜め動作時間
 	static inline const uint32_t kChargeDuration = 20;
-
-	// 突進動作時間
 	static inline const uint32_t kDashDuration = 10;
-
-	// 余韻動作時間
 	static inline const uint32_t kRecoveryDuration = 15;
+
+	// ノックバックリクエスト
+	bool knockbackRequest_ = false;
+
+	// 現在のノックバックフェーズ
+	KnockbackPhase knockbackPhase_ = KnockbackPhase::kMove;
+
+	// ノックバック経過時間
+	uint32_t knockbackParameter_ = 0;
+
+	// ノックバック移動時間
+	static inline const uint32_t kKnockbackMoveDuration = 10;
+
+	// ノックバック復帰時間
+	static inline const uint32_t kKnockbackRecoveryDuration = 18;
+
+	// ノックバック横速度
+	static inline const float kKnockbackSpeed = 0.35f;
+
+	// ノックバック上方向速度
+	static inline const float kKnockbackJumpSpeed = 0.25f;
 };
