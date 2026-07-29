@@ -3,15 +3,10 @@
 #include "CameraController.h"
 #include "DeathParticles.h"
 #include "Enemy.h"
-#include "Fade.h"
-#include "GuardEffect.h"
-#include "HitEffect.h"
 #include "KamataEngine.h"
 #include "MapChipField.h"
 #include "Player.h"
-#include "ShieldEnemy.h"
 #include "Skydome.h"
-#include "StageManager.h"
 #include "WorldTransformUpdate.h"
 
 #include <3d/DebugCamera.h>
@@ -19,87 +14,70 @@
 #include <list>
 #include <vector>
 
-/// <summary>
-/// ゲームシーン
-/// </summary>
+// ゲームシーン
 class GameScene {
-
-public:
-	enum class Phase {
-		kFadeIn,
-		kPlay,
-		kDeath,
-		kFadeOut,
-	};
 
 public:
 	~GameScene();
 
-	void Initialize(StageManager* stageDataManager);
+	void Initialize();
 	void Update();
 	void Draw();
 
-	bool IsFinished() const { return finished_; }
-
-	/// <summary>
-	/// リロード要求フラグのgetter
-	/// </summary>
-	bool IsReloadRequested() const { return reloadRequested_; }
-
-	void CreateHitEffect(const KamataEngine::Vector3& position);
-
-	void CreateGuardEffect(const KamataEngine::Vector3& position);
-
 private:
 	/// <summary>
-	/// フィールドオブジェクトの生成
+	/// ブロックの生成
 	/// </summary>
-	void GenerateFieldObjects();
+	void GenerateBlocks();
 
+	/// <summary>
+	/// 全ての当たり判定を行う
+	/// </summary>
 	void CheckAllCollisions();
-	void UpdatePlayPhase();
-	void UpdateDeathPhase();
-	void ChangePhase();
 
 private:
-	Phase phase_ = Phase::kPlay;
-
+	// 自キャラ用3Dモデルデータ
 	KamataEngine::Model* model_ = nullptr;
+
+	// ブロック用3Dモデルデータ
 	KamataEngine::Model* modelBlock_ = nullptr;
+
+	// 天球用3Dモデルデータ
 	KamataEngine::Model* modelSkydome_ = nullptr;
+
+	// 敵用3Dモデルデータ
 	KamataEngine::Model* modelEnemy_ = nullptr;
-	KamataEngine::Model* modelShieldEnemy_ = nullptr;
-	KamataEngine::Model* modelAttack_ = nullptr;
-	KamataEngine::Model* modelHitEffect_ = nullptr;
-	KamataEngine::Model* modelGuardEffect_ = nullptr;
+
+	// デスパーティクル用3Dモデルデータ
 	KamataEngine::Model* modelDeathParticle_ = nullptr;
 
+	// カメラ
 	KamataEngine::Camera camera_;
+
+	// カメラコントローラ
 	CameraController* cameraController_ = nullptr;
+
+	// デバッグカメラ有効
 	bool isDebugCameraActive_ = false;
+
+	// デバッグカメラ
 	KamataEngine::DebugCamera* debugCamera_ = nullptr;
 
+	// 自キャラ
 	Player* player_ = nullptr;
 
+	// 敵
 	std::list<Enemy*> enemies_;
-	std::list<ShieldEnemy*> shieldEnemies_;
-	std::list<HitEffect*> hitEffects_;
-	std::list<GuardEffect*> guardEffects_;
 
+	// デスパーティクル
 	DeathParticles* deathParticles_ = nullptr;
+
+	// 天球
 	Skydome* skydome_ = nullptr;
+
+	// マップチップフィールド
 	MapChipField* mapChipField_ = nullptr;
 
+	// ブロック用ワールドトランスフォーム
 	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
-
-	Fade* fade_ = nullptr;
-	bool finished_ = false;
-
-	// リロード要求フラグ
-	bool reloadRequested_ = false;
-
-	// ステージマネージャ参照用のポインタ
-	StageManager* stageManager_ = nullptr;
-
-	static inline const float kFadeDuration = 1.0f;
 };

@@ -7,13 +7,9 @@
 
 namespace {
 
-/// <summary>
-/// マップチップ種別テーブル
-/// </summary>
-std::map<char, MapChipType> mapChipTypeTable = {
-    {'B', MapChipType::kBlock },
-    {'P', MapChipType::kPlayer},
-    {'E', MapChipType::kEnemy },
+std::map<std::string, MapChipType> mapChipTable = {
+    {"0", MapChipType::kBlank},
+    {"1", MapChipType::kBlock},
 };
 
 } // namespace
@@ -27,16 +23,9 @@ void MapChipField::ResetMapChipData() {
 	mapChipData_.data.resize(kNumBlockVertical);
 
 	// 横方向の要素数を設定
-	for (std::vector<MapChipDataUnit>& mapChipDataLine : mapChipData_.data) {
+	for (std::vector<MapChipType>& mapChipDataLine : mapChipData_.data) {
 
 		mapChipDataLine.resize(kNumBlockHorizontal);
-
-		// 全てのマスを空白で初期化
-		for (MapChipDataUnit& mapChipDataUnit : mapChipDataLine) {
-
-			mapChipDataUnit.type = MapChipType::kBlank;
-			mapChipDataUnit.subID = 0;
-		}
 	}
 }
 
@@ -73,33 +62,15 @@ void MapChipField::LoadMapChipCsv(const std::string& filePath) {
 			std::string word;
 			std::getline(lineStream, word, ',');
 
-			// 空白の単語はスキップ
-			if (word.empty()) {
-				continue;
+			if (mapChipTable.contains(word)) {
+
+				mapChipData_.data[i][j] = mapChipTable[word];
 			}
-
-			// 先頭文字がマップチップ種別に該当するか確認
-			if (!mapChipTypeTable.contains(word[kChipType])) {
-				continue;
-			}
-
-			// 先頭文字でマップチップ種別を判別
-			mapChipData_.data[i][j].type = mapChipTypeTable[word[kChipType]];
-
-			// サブIDを表す文字が無い場合は0番で固定
-			if (word.size() <= kChipSubID) {
-				continue;
-			}
-
-			// マップチップのサブIDを設定
-			mapChipData_.data[i][j].subID = static_cast<uint8_t>(word[kChipSubID] - '0');
 		}
 	}
 }
 
-MapChipType MapChipField::GetMapChipTypeByIndex(uint32_t xIndex, uint32_t yIndex) { return mapChipData_.data[yIndex][xIndex].type; }
-
-uint8_t MapChipField::GetMapChipSubIDByIndex(uint32_t xIndex, uint32_t yIndex) { return mapChipData_.data[yIndex][xIndex].subID; }
+MapChipType MapChipField::GetMapChipTypeByIndex(uint32_t xIndex, uint32_t yIndex) { return mapChipData_.data[yIndex][xIndex]; }
 
 KamataEngine::Vector3 MapChipField::GetMapChipPositionByIndex(uint32_t xIndex, uint32_t yIndex) {
 

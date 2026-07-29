@@ -5,7 +5,6 @@
 
 // 前方宣言
 class Player;
-class GameScene;
 
 /// <summary>
 /// 敵
@@ -43,49 +42,6 @@ public:
 	/// </summary>
 	void OnCollision(const Player* player);
 
-	/// <summary>
-	/// デスフラグのgetter
-	/// </summary>
-	bool IsDead() const { return isDead_; }
-
-	/// <summary>
-	/// コリジョン無効フラグのgetter
-	/// </summary>
-	bool IsCollisionDisabled() const { return isCollisionDisabled_; }
-
-	/// <summary>
-	/// ゲームシーンを設定
-	/// </summary>
-	void SetGameScene(GameScene* gameScene) { gameScene_ = gameScene; }
-
-private:
-	// 振るまい
-	enum class Behavior {
-		kUnknown,
-		kRoot,
-		kDeath,
-	};
-
-	/// <summary>
-	/// 歩行ビヘイビアの初期化
-	/// </summary>
-	void BehaviorRootInitialize();
-
-	/// <summary>
-	/// デス演出ビヘイビアの初期化
-	/// </summary>
-	void BehaviorDeathInitialize();
-
-	/// <summary>
-	/// 歩行ビヘイビアの更新
-	/// </summary>
-	void BehaviorRootUpdate();
-
-	/// <summary>
-	/// デス演出ビヘイビアの更新
-	/// </summary>
-	void BehaviorDeathUpdate();
-
 private:
 	// ワールドトランスフォーム
 	KamataEngine::WorldTransform worldTransform_;
@@ -117,25 +73,4 @@ private:
 	// 敵の当たり判定サイズ
 	static inline const float kWidth = 0.8f;
 	static inline const float kHeight = 0.8f;
-
-	// 現在の振るまい
-	Behavior behavior_ = Behavior::kRoot;
-
-	// 次の振るまいリクエスト
-	Behavior behaviorRequest_ = Behavior::kUnknown;
-
-	// デス演出の経過時間
-	float deathTimer_ = 0.0f;
-
-	// デス演出時間
-	static inline const float kDeathMotionTime = 1.0f;
-
-	// デスフラグ
-	bool isDead_ = false;
-
-	// コリジョン無効フラグ
-	bool isCollisionDisabled_ = false;
-
-	// ゲームシーン
-	GameScene* gameScene_ = nullptr;
 };

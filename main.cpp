@@ -1,186 +1,11 @@
-#include <Windows.h>
-
 #include "GameScene.h"
 #include "KamataEngine.h"
-#include "StageManager.h"
-#include "TitleScene.h"
+#include <Windows.h>
 
-#include <cassert>
-#include <fstream>
-#include <sstream>
-#include <string>
-
-#ifdef _DEBUG
-#include "2d/ImGuiManager.h"
-#endif
-
-// ゲームシーン
-GameScene* gameScene = nullptr;
-
-// タイトルシーン
-TitleScene* titleScene = nullptr;
-
-// ステージマネージャ
-StageManager* stageManager = nullptr;
-
-// シーン
-enum class Scene {
-
-	kUnknown = 0,
-
-	kTitle,
-	kGame,
-};
-
-// 現在シーン
-Scene scene = Scene::kUnknown;
-
-/// <summary>
-/// 開発用起動設定ファイルの読み込み
-/// </summary>
-void LoadDebugSettings() {
-
-	// 開発用起動設定ファイルを開く
-	std::ifstream file("DebugSettings.ini");
-
-	assert(file && "開発用起動設定ファイルが存在しません");
-
-	// 1行ずつ読み込む
-	std::string line;
-
-	while (std::getline(file, line)) {
-
-		// 1行分の文字列をストリームに変換
-		std::istringstream lineStream(line);
-
-		// 設定名を取得
-		std::string key;
-		std::getline(lineStream, key, '=');
-
-		// 設定値を取得
-		std::string value;
-		std::getline(lineStream, value);
-
-		// ステージ設定
-		if (key == "InitialStage") {
-
-			stageManager->SetCurrentStageIndexByName(value);
-		}
-	}
-
-	// ファイルを閉じる
-	file.close();
-}
-
-/// <summary>
-/// シーン切り替え
-/// </summary>
-void ChangeScene() {
-
-	switch (scene) {
-
-	case Scene::kTitle:
-
-		// タイトルシーンが終了した
-		if (titleScene->IsFinished()) {
-
-			// シーンをゲームに変更
-			scene = Scene::kGame;
-
-			// 旧シーンの解放
-			delete titleScene;
-			titleScene = nullptr;
-
-			// 新シーンの生成と初期化
-			gameScene = new GameScene();
-			gameScene->Initialize(stageManager);
-		}
-
-		break;
-
-	case Scene::kGame:
-
-		// ゲームシーンが終了した
-		if (gameScene->IsFinished()) {
-
-			// シーンをタイトルに変更
-			scene = Scene::kTitle;
-
-			// 旧シーンの解放
-			delete gameScene;
-			gameScene = nullptr;
-
-			// 新シーンの生成と初期化
-			titleScene = new TitleScene();
-			titleScene->Initialize();
-
-		} else if (gameScene->IsReloadRequested()) {
-
-			// シーンリロード
-			delete gameScene;
-			gameScene = nullptr;
-
-			gameScene = new GameScene();
-			gameScene->Initialize(stageManager);
-		}
-
-		break;
-
-	case Scene::kUnknown:
-		break;
-	}
-}
-
-/// <summary>
-/// 現在シーンの更新
-/// </summary>
-void UpdateScene() {
-
-	switch (scene) {
-
-	case Scene::kTitle:
-
-		titleScene->Update();
-
-		break;
-
-	case Scene::kGame:
-
-		gameScene->Update();
-
-		break;
-
-	case Scene::kUnknown:
-		break;
-	}
-}
-
-/// <summary>
-/// 現在シーンの描画
-/// </summary>
-void DrawScene() {
-
-	switch (scene) {
-
-	case Scene::kTitle:
-
-		titleScene->Draw();
-
-		break;
-
-	case Scene::kGame:
-
-		gameScene->Draw();
-
-		break;
-
-	case Scene::kUnknown:
-		break;
-	}
-}
-
-// Windowsアプリでのエントリーポイント
+// Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
+
+	// testメッセージ
 
 	// エンジンの初期化
 	KamataEngine::Initialize(L"LE2B_07_カワダ_リクト");
@@ -191,58 +16,24 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// 画面描画
 	DirectXCommon* dxCommon = DirectXCommon::GetInstance();
 
-#ifdef _DEBUG
-	// ImGuiManagerインスタンスの取得
-	ImGuiManager* imguiManager = ImGuiManager::GetInstance();
-#endif
-
-	// ステージマネージャの生成
-	stageManager = new StageManager();
-
-	// ステージデータファイル読み込み
-	stageManager->LoadStageData();
-
-#ifdef _DEBUG
-	// デバッグ設定ファイル読み込み
-	LoadDebugSettings();
+	// ゲームシーンの生成
+	GameScene* gameScene = new GameScene();
 
 	// ゲームシーンの初期化
-	scene = Scene::kGame;
-
-	gameScene = new GameScene();
-	gameScene->Initialize(stageManager);
-
-#else
-	// 最初のシーンの初期化
-	scene = Scene::kTitle;
-
-	titleScene = new TitleScene();
-	titleScene->Initialize();
-#endif
+	gameScene->Initialize();
 
 	// メインループ
 	while (true) {
+
+		// testメッセージ
 
 		// エンジンの更新
 		if (KamataEngine::Update()) {
 			break;
 		}
 
-#ifdef _DEBUG
-		// ImGui受付開始
-		imguiManager->Begin();
-#endif
-
-		// シーン切り替え
-		ChangeScene();
-
-		// 現在シーンの更新
-		UpdateScene();
-
-#ifdef _DEBUG
-		// ImGui受付終了
-		imguiManager->End();
-#endif
+		// ゲームシーンの更新
+		gameScene->Update();
 
 		// 描画前処理
 		dxCommon->PreDraw();
@@ -250,27 +41,21 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 		// 3Dモデル描画前処理
 		Model::PreDraw();
 
-		// 現在シーンの描画
-		DrawScene();
+		// ゲームシーンの描画
+		gameScene->Draw();
 
 		// 3Dモデル描画後処理
 		Model::PostDraw();
-
-#ifdef _DEBUG
-		// ImGui描画
-		imguiManager->Draw();
-#endif
 
 		// 描画後処理
 		dxCommon->PostDraw();
 	}
 
-	// シーンの解放
-	delete titleScene;
+	// ゲームシーンの解放
 	delete gameScene;
 
-	// ステージマネージャの解放
-	delete stageManager;
+	// nullptrを代入
+	gameScene = nullptr;
 
 	// エンジンの終了処理
 	KamataEngine::Finalize();

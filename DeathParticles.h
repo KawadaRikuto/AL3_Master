@@ -6,7 +6,7 @@
 #include <numbers>
 
 /// <summary>
-/// デスパーティクル
+/// デス演出用パーティクル
 /// </summary>
 class DeathParticles {
 
@@ -26,42 +26,37 @@ public:
 	/// </summary>
 	void Draw();
 
-	/// <summary>
-	/// 終了フラグのgetter
-	/// </summary>
-	bool IsFinished() const { return isFinished_; }
-
 private:
-	// パーティクルの数
+	// パーティクルの個数
 	static inline const uint32_t kNumParticles = 8;
 
-	// パーティクルの表示時間
+	// 存続時間（消滅までの時間）［秒］
 	static inline const float kDuration = 1.0f;
 
-	// パーティクルの移動速度
+	// 移動の速さ
 	static inline const float kSpeed = 0.1f;
 
-	// パーティクルごとの角度
-	static inline const float kAngleUnit = 2.0f * std::numbers::pi_v<float> / static_cast<float>(kNumParticles);
+	// 分割した1個分の角度
+	static inline const float kAngleUnit = std::numbers::pi_v<float> * 2.0f / static_cast<float>(kNumParticles);
 
 	// ワールドトランスフォーム
 	std::array<KamataEngine::WorldTransform, kNumParticles> worldTransforms_;
 
-	// 3Dモデル
+	// モデル
 	KamataEngine::Model* model_ = nullptr;
 
 	// カメラ
 	KamataEngine::Camera* camera_ = nullptr;
 
-	// オブジェクトカラー
+	// 色変更オブジェクト
 	KamataEngine::ObjectColor objectColor_;
 
-	// 色
+	// 色の数値
 	KamataEngine::Vector4 color_;
 
 	// 終了フラグ
 	bool isFinished_ = false;
 
-	// 経過時間
+	// 経過時間カウント
 	float counter_ = 0.0f;
 };

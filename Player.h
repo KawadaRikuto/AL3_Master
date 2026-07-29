@@ -16,7 +16,7 @@ public:
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	void Initialize(KamataEngine::Model* model, KamataEngine::Model* modelAttack, KamataEngine::Camera* camera, const KamataEngine::Vector3& position);
+	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position);
 
 	/// <summary>
 	/// 更新
@@ -46,7 +46,7 @@ public:
 	/// <summary>
 	/// ワールド座標を取得
 	/// </summary>
-	KamataEngine::Vector3 GetWorldPosition() const;
+	KamataEngine::Vector3 GetWorldPosition();
 
 	/// <summary>
 	/// AABBを取得
@@ -58,62 +58,25 @@ public:
 	/// </summary>
 	void OnCollision(const Enemy* enemy);
 
-	/// <summary>
-	/// ノックバックをリクエスト
-	/// </summary>
-	void RequestKnockback() { knockbackRequest_ = true; }
-
-	/// <summary>
-	/// デスフラグのgetter
-	/// </summary>
-	bool IsDead() const { return isDead_; }
-
-	/// <summary>
-	/// 攻撃中かどうか
-	/// </summary>
-	bool IsAttack() const { return behavior_ == Behavior::kAttack; }
-
-	/// <summary>
-	/// 右を向いているか取得
-	/// </summary>
-	bool IsFacingRight() const;
 
 private:
-	// 振るまい
-	enum class Behavior {
-		kUnknown,
-		kRoot,
-		kAttack,
-		kKnockback,
-	};
-
-	// 攻撃フェーズ
-	enum class AttackPhase {
-		kCharge,
-		kDash,
-		kRecovery,
-	};
-
-	// ノックバックフェーズ
-	enum class KnockbackPhase {
-		kMove,
-		kRecovery,
-	};
-
 	// 左右
 	enum class LRDirection {
 		kRight,
 		kLeft,
 	};
 
+	// 角
 	enum Corner {
 		kRightBottom,
 		kLeftBottom,
 		kRightTop,
 		kLeftTop,
+
 		kNumCorner,
 	};
 
+	// マップとの当たり判定情報
 	struct CollisionMapInfo {
 		bool ceiling = false;
 		bool landing = false;
@@ -132,23 +95,15 @@ private:
 	void WallCollision(const CollisionMapInfo& info);
 	void SwitchGroundState(const CollisionMapInfo& info);
 
-	void BehaviorRootInitialize();
-	void BehaviorAttackInitialize();
-	void BehaviorKnockbackInitialize();
-
-	void BehaviorRootUpdate();
-	void BehaviorAttackUpdate();
-	void BehaviorKnockbackUpdate();
-
 	KamataEngine::Vector3 CornerPosition(const KamataEngine::Vector3& center, Corner corner);
 
 private:
 	KamataEngine::WorldTransform worldTransform_;
-	KamataEngine::WorldTransform worldTransformAttack_;
 
 	KamataEngine::Model* model_ = nullptr;
-	KamataEngine::Model* modelAttack_ = nullptr;
+
 	KamataEngine::Camera* camera_ = nullptr;
+
 	MapChipField* mapChipField_ = nullptr;
 
 	KamataEngine::Vector3 velocity_ = {};
@@ -175,37 +130,4 @@ private:
 	static inline const float kGravityAcceleration = 0.05f;
 	static inline const float kLimitFallSpeed = 0.5f;
 	static inline const float kJumpAcceleration = 1.0f;
-
-	bool isDead_ = false;
-
-	Behavior behavior_ = Behavior::kRoot;
-	Behavior behaviorRequest_ = Behavior::kUnknown;
-
-	AttackPhase attackPhase_ = AttackPhase::kCharge;
-	uint32_t attackParameter_ = 0;
-
-	static inline const uint32_t kChargeDuration = 20;
-	static inline const uint32_t kDashDuration = 10;
-	static inline const uint32_t kRecoveryDuration = 15;
-
-	// ノックバックリクエスト
-	bool knockbackRequest_ = false;
-
-	// 現在のノックバックフェーズ
-	KnockbackPhase knockbackPhase_ = KnockbackPhase::kMove;
-
-	// ノックバック経過時間
-	uint32_t knockbackParameter_ = 0;
-
-	// ノックバック移動時間
-	static inline const uint32_t kKnockbackMoveDuration = 10;
-
-	// ノックバック復帰時間
-	static inline const uint32_t kKnockbackRecoveryDuration = 18;
-
-	// ノックバック横速度
-	static inline const float kKnockbackSpeed = 0.35f;
-
-	// ノックバック上方向速度
-	static inline const float kKnockbackJumpSpeed = 0.25f;
 };
