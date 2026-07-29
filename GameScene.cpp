@@ -133,11 +133,22 @@ void UpdateWorldTransform(KamataEngine::WorldTransform& worldTransform) {
 	worldTransform.TransferMatrix();
 }
 
-void GameScene::Initialize() {
+void GameScene::Initialize(StageManager* stageDataManager) {
 
+	// 引数をメンバ変数に記録する
+	stageManager_ = stageDataManager;
+
+	// マップチップフィールドの生成
 	mapChipField_ = new MapChipField();
 
-	mapChipField_->LoadMapChipCsv("Resources/blocks.csv");
+	// 現在のステージデータを取得する
+	const StageManager::StageData& stageData = stageManager_->GetCurrentStageData();
+
+	// ステージファイルパスの生成
+	const std::string stageFileName = "Resources/fields/" + stageData.name + ".csv";
+
+	// ステージファイルの読み込み
+	mapChipField_->LoadMapChipCsv(stageFileName);
 
 	model_ = KamataEngine::Model::CreateFromOBJ("player", true);
 

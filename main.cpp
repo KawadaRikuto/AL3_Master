@@ -2,7 +2,13 @@
 
 #include "GameScene.h"
 #include "KamataEngine.h"
+#include "StageManager.h"
 #include "TitleScene.h"
+
+#include <cassert>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 #ifdef _DEBUG
 #include "2d/ImGuiManager.h"
@@ -13,6 +19,9 @@ GameScene* gameScene = nullptr;
 
 // タイトルシーン
 TitleScene* titleScene = nullptr;
+
+// ステージマネージャ
+StageManager* stageManager = nullptr;
 
 // シーン
 enum class Scene {
@@ -25,6 +34,43 @@ enum class Scene {
 
 // 現在シーン
 Scene scene = Scene::kUnknown;
+
+/// <summary>
+/// 開発用起動設定ファイルの読み込み
+/// </summary>
+void LoadDebugSettings() {
+
+	// 開発用起動設定ファイルを開く
+	std::ifstream file("DebugSettings.ini");
+
+	assert(file && "開発用起動設定ファイルが存在しません");
+
+	// 1行ずつ読み込む
+	std::string line;
+
+	while (std::getline(file, line)) {
+
+		// 1行分の文字列をストリームに変換
+		std::istringstream lineStream(line);
+
+		// 設定名を取得
+		std::string key;
+		std::getline(lineStream, key, '=');
+
+		// 設定値を取得
+		std::string value;
+		std::getline(lineStream, value);
+
+		// ステージ設定
+		if (key == "InitialStage") {
+
+			stageManager->SetCurrentStageIndexByName(value);
+		}
+	}
+
+	// ファイルを閉じる
+	file.close();
+}
 
 /// <summary>
 /// シーン切り替え
@@ -47,7 +93,7 @@ void ChangeScene() {
 
 			// 新シーンの生成と初期化
 			gameScene = new GameScene();
-			gameScene->Initialize();
+			gameScene->Initialize(stageManager);
 		}
 
 		break;
@@ -75,7 +121,7 @@ void ChangeScene() {
 			gameScene = nullptr;
 
 			gameScene = new GameScene();
-			gameScene->Initialize();
+			gameScene->Initialize(stageManager);
 		}
 
 		break;
@@ -150,11 +196,29 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	ImGuiManager* imguiManager = ImGuiManager::GetInstance();
 #endif
 
+	// ステージマネージャの生成
+	stageManager = new StageManager();
+
+	// ステージデータファイル読み込み
+	stageManager->LoadStageData();
+
+#ifdef _DEBUG
+	// デバッグ設定ファイル読み込み
+	LoadDebugSettings();
+
+	// ゲームシーンの初期化
+	scene = Scene::kGame;
+
+	gameScene = new GameScene();
+	gameScene->Initialize(stageManager);
+
+#else
 	// 最初のシーンの初期化
 	scene = Scene::kTitle;
 
 	titleScene = new TitleScene();
 	titleScene->Initialize();
+#endif
 
 	// メインループ
 	while (true) {
@@ -204,6 +268,9 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int) {
 	// シーンの解放
 	delete titleScene;
 	delete gameScene;
+
+	// ステージマネージャの解放
+	delete stageManager;
 
 	// エンジンの終了処理
 	KamataEngine::Finalize();

@@ -11,6 +11,7 @@
 #include "Player.h"
 #include "ShieldEnemy.h"
 #include "Skydome.h"
+#include "StageManager.h"
 #include "WorldTransformUpdate.h"
 
 #include <3d/DebugCamera.h>
@@ -34,7 +35,7 @@ public:
 public:
 	~GameScene();
 
-	void Initialize();
+	void Initialize(StageManager* stageDataManager);
 	void Update();
 	void Draw();
 
@@ -96,6 +97,9 @@ private:
 
 	// リロード要求フラグ
 	bool reloadRequested_ = false;
+
+	// ステージマネージャ参照用のポインタ
+	StageManager* stageManager_ = nullptr;
 
 	static inline const float kFadeDuration = 1.0f;
 };
