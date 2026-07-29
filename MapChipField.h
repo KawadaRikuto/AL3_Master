@@ -10,15 +10,33 @@
 /// マップチップの種類
 /// </summary>
 enum class MapChipType {
-	kBlank, // 空白
-	kBlock, // ブロック
+	kBlank,  // 空白
+	kBlock,  // ブロック
+	kPlayer, // プレイヤー
+	kEnemy,  // 敵
 };
 
 /// <summary>
-/// マップチップデータ
+/// マップチップCSVの文字番号
+/// </summary>
+enum MapChipCharIndex {
+	kChipType = 0, // マップチップ種別
+	kChipSubID = 1 // タイプごとのサブID
+};
+
+/// <summary>
+/// 1マス分のマップチップデータ
+/// </summary>
+struct MapChipDataUnit {
+	MapChipType type; // マップチップの種別
+	uint8_t subID;    // 種別ごとのサブID
+};
+
+/// <summary>
+/// ステージ全体のマップチップデータ
 /// </summary>
 struct MapChipData {
-	std::vector<std::vector<MapChipType>> data;
+	std::vector<std::vector<MapChipDataUnit>> data;
 };
 
 /// <summary>
@@ -56,9 +74,14 @@ public:
 	void LoadMapChipCsv(const std::string& filePath);
 
 	/// <summary>
-	/// 指定したマスのマップチップを取得
+	/// 指定したマスのマップチップ種別を取得
 	/// </summary>
 	MapChipType GetMapChipTypeByIndex(uint32_t xIndex, uint32_t yIndex);
+
+	/// <summary>
+	/// 指定したマスのマップチップサブIDを取得
+	/// </summary>
+	uint8_t GetMapChipSubIDByIndex(uint32_t xIndex, uint32_t yIndex);
 
 	/// <summary>
 	/// マップチップ番号から座標を取得する

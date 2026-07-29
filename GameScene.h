@@ -24,7 +24,6 @@
 class GameScene {
 
 public:
-	// シーンのフェーズ
 	enum class Phase {
 		kFadeIn,
 		kPlay,
@@ -42,17 +41,20 @@ public:
 	bool IsFinished() const { return finished_; }
 
 	/// <summary>
-	/// ヒットエフェクトを生成
+	/// リロード要求フラグのgetter
 	/// </summary>
+	bool IsReloadRequested() const { return reloadRequested_; }
+
 	void CreateHitEffect(const KamataEngine::Vector3& position);
 
-	/// <summary>
-	/// ガードエフェクトを生成
-	/// </summary>
 	void CreateGuardEffect(const KamataEngine::Vector3& position);
 
 private:
-	void GenerateBlocks();
+	/// <summary>
+	/// フィールドオブジェクトの生成
+	/// </summary>
+	void GenerateFieldObjects();
+
 	void CheckAllCollisions();
 	void UpdatePlayPhase();
 	void UpdateDeathPhase();
@@ -68,10 +70,7 @@ private:
 	KamataEngine::Model* modelShieldEnemy_ = nullptr;
 	KamataEngine::Model* modelAttack_ = nullptr;
 	KamataEngine::Model* modelHitEffect_ = nullptr;
-
-	// ガードエフェクト用3Dモデルデータ
 	KamataEngine::Model* modelGuardEffect_ = nullptr;
-
 	KamataEngine::Model* modelDeathParticle_ = nullptr;
 
 	KamataEngine::Camera camera_;
@@ -84,8 +83,6 @@ private:
 	std::list<Enemy*> enemies_;
 	std::list<ShieldEnemy*> shieldEnemies_;
 	std::list<HitEffect*> hitEffects_;
-
-	// ガードエフェクト
 	std::list<GuardEffect*> guardEffects_;
 
 	DeathParticles* deathParticles_ = nullptr;
@@ -96,6 +93,9 @@ private:
 
 	Fade* fade_ = nullptr;
 	bool finished_ = false;
+
+	// リロード要求フラグ
+	bool reloadRequested_ = false;
 
 	static inline const float kFadeDuration = 1.0f;
 };

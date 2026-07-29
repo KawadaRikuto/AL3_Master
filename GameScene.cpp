@@ -2,6 +2,10 @@
 
 #include <cmath>
 
+#ifdef _DEBUG
+#include <imgui.h>
+#endif
+
 namespace {
 
 /// <summary>
@@ -175,45 +179,11 @@ void GameScene::Initialize() {
 
 	debugCamera_->SetFarZ(1000.0f);
 
-	player_ = new Player();
+	// フィールドオブジェクトを生成
+	GenerateFieldObjects();
 
-	KamataEngine::Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(3, 16);
-
-	player_->Initialize(model_, modelAttack_, &camera_, playerPosition);
-
-	player_->SetMapChipField(mapChipField_);
-
-	const int32_t kNumEnemies = 3;
-
-	for (int32_t i = 0; i < kNumEnemies; ++i) {
-
-		Enemy* newEnemy = new Enemy();
-
-		KamataEngine::Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(10 + i * 5, 18);
-
-		newEnemy->Initialize(modelEnemy_, &camera_, enemyPosition);
-
-		// ゲームシーンを設定
-		newEnemy->SetGameScene(this);
-
-		enemies_.push_back(newEnemy);
-	}
-
-	const int32_t kNumShieldEnemies = 3;
-
-	for (int32_t i = 0; i < kNumShieldEnemies; ++i) {
-
-		ShieldEnemy* newShieldEnemy = new ShieldEnemy();
-
-		KamataEngine::Vector3 shieldEnemyPosition = mapChipField_->GetMapChipPositionByIndex(25 + i * 5, 18);
-
-		newShieldEnemy->Initialize(modelShieldEnemy_, &camera_, shieldEnemyPosition);
-
-		// ゲームシーンを設定
-		newShieldEnemy->SetGameScene(this);
-
-		shieldEnemies_.push_back(newShieldEnemy);
-	}
+	// CSVに自キャラが配置されているか確認
+	assert(player_);
 
 	cameraController_ = new CameraController();
 
@@ -241,8 +211,6 @@ void GameScene::Initialize() {
 	skydome_ = new Skydome();
 
 	skydome_->Initialize(modelSkydome_, &camera_);
-
-	GenerateBlocks();
 
 	// フェードの生成
 	fade_ = new Fade();
@@ -278,7 +246,7 @@ void GameScene::CreateGuardEffect(const KamataEngine::Vector3& position) {
 	guardEffects_.push_back(newGuardEffect);
 }
 
-void GameScene::GenerateBlocks() {
+void GameScene::GenerateFieldObjects() {
 
 	worldTransformBlocks_.resize(MapChipField::kNumBlockVertical);
 
@@ -287,27 +255,116 @@ void GameScene::GenerateBlocks() {
 		worldTransformBlocks_[i].resize(MapChipField::kNumBlockHorizontal);
 	}
 
+	// フィールドオブジェクトの生成
 	for (uint32_t i = 0; i < MapChipField::kNumBlockVertical; ++i) {
 
 		for (uint32_t j = 0; j < MapChipField::kNumBlockHorizontal; ++j) {
 
-			if (mapChipField_->GetMapChipTypeByIndex(j, i) == MapChipType::kBlank) {
+			// マップチップ種別を取得
+			MapChipType mapChipType = mapChipField_->GetMapChipTypeByIndex(j, i);
 
-				continue;
+			switch (mapChipType) {
+
+			case MapChipType::kBlock: {
+
+				// ブロックの生成
+				worldTransformBlocks_[i][j] = new KamataEngine::WorldTransform();
+
+				worldTransformBlocks_[i][j]->Initialize();
+
+				worldTransformBlocks_[i][j]->translation_ = mapChipField_->GetMapChipPositionByIndex(j, i);
+
+				break;
 			}
 
-			worldTransformBlocks_[i][j] = new KamataEngine::WorldTransform();
+			case MapChipType::kPlayer: {
 
-			worldTransformBlocks_[i][j]->Initialize();
+				assert(player_ == nullptr && "自キャラを二重に配置しようとしています");
 
-			KamataEngine::Vector3 blockPosition = mapChipField_->GetMapChipPositionByIndex(j, i);
+				// 自キャラの生成
+				player_ = new Player();
 
-			worldTransformBlocks_[i][j]->translation_ = blockPosition;
+				// 座標を指定して自キャラの初期化
+				KamataEngine::Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(j, i);
+
+				player_->Initialize(model_, modelAttack_, &camera_, playerPosition);
+
+				// 自キャラにマップチップフィールドをセット
+				player_->SetMapChipField(mapChipField_);
+
+				break;
+			}
+
+			case MapChipType::kEnemy: {
+
+				// 敵のサブIDを取得
+				uint8_t subID = mapChipField_->GetMapChipSubIDByIndex(j, i);
+
+				switch (subID) {
+
+				case 0: {
+
+					// 通常敵の生成
+					Enemy* newEnemy = new Enemy();
+
+					// 座標を指定して通常敵を初期化
+					KamataEngine::Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(j, i);
+
+					newEnemy->Initialize(modelEnemy_, &camera_, enemyPosition);
+
+					// 敵にゲームシーンのポインタをセット
+					newEnemy->SetGameScene(this);
+
+					// 通常敵のリストに追加
+					enemies_.push_back(newEnemy);
+
+					break;
+				}
+
+				case 1: {
+
+					// 盾持ち敵の生成
+					ShieldEnemy* newShieldEnemy = new ShieldEnemy();
+
+					// 座標を指定して盾持ち敵を初期化
+					KamataEngine::Vector3 shieldEnemyPosition = mapChipField_->GetMapChipPositionByIndex(j, i);
+
+					newShieldEnemy->Initialize(modelShieldEnemy_, &camera_, shieldEnemyPosition);
+
+					// 盾持ち敵にゲームシーンのポインタをセット
+					newShieldEnemy->SetGameScene(this);
+
+					// 盾持ち敵のリストに追加
+					shieldEnemies_.push_back(newShieldEnemy);
+
+					break;
+				}
+
+				default:
+					break;
+				}
+
+				break;
+			}
+
+			case MapChipType::kBlank:
+			default:
+				break;
+			}
 		}
 	}
 }
 
 void GameScene::Update() {
+
+#ifdef _DEBUG
+	// リロードボタン
+	if (ImGui::Button("Reload")) {
+
+		// リロード要求フラグを立てる
+		reloadRequested_ = true;
+	}
+#endif
 
 	switch (phase_) {
 
